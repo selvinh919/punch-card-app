@@ -1,154 +1,166 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Wanderlust Lash Bar — Punch Card</title>
-  <meta name="theme-color" content="#ff6ea6" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="styles.css" />
-  <script>if (navigator.standalone) { document.documentElement.classList.add('standalone'); }</script>
-</head>
-<body>
-  <header class="app-bar" id="headerBar">
-    <div class="brand-wrap">
-      <img src="logo-lash.svg" alt="Lash logo" class="lash-logo" id="headerLogo" />
-      <h1 id="brandTitle">Wanderlust Lash Bar</h1>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Wanderlust Lash Bar — Punch Card</title>
+<link rel="manifest" href="manifest.json"/><link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<link rel="stylesheet" href="styles.css"/>
+<script>if(navigator.standalone){document.documentElement.classList.add('standalone')}</script>
+</head><body>
+<header class="app-bar" id="headerBar">
+  <div class="brand-wrap">
+    <img src="logo-lash.svg" class="lash-logo" id="headerLogo" alt=""/>
+    <h1 id="brandTitle">Wanderlust Lash Bar</h1>
+  </div>
+</header>
+<nav class="tabs" role="tablist">
+  <button class="tab active" data-tab="clients" aria-selected="true">Clients</button>
+  <button class="tab" data-tab="rewards" aria-selected="false">Rewards</button>
+  <button class="tab" data-tab="settings" aria-selected="false">Settings</button>
+</nav>
+<main>
+<section id="tab-clients" class="tab-panel active">
+  <div class="toolbar">
+    <input id="searchInput" class="search" type="search" placeholder="Search clients..."/>
+    <button id="addClientBtn" class="btn primary">+ New</button>
+  </div>
+  <div id="clientsList" class="cards"></div>
+</section>
+
+<section id="tab-rewards" class="tab-panel">
+  <div class="info"><h2>Reward Rules</h2><p>Create perks that unlock after a number of punches.</p></div>
+  <form id="rewardsForm" class="rewards-form">
+    <div class="row">
+      <label class="inline">Punches <input type="number" id="rulePunches" min="1" value="3"></label>
+      <label class="inline">Reward Label <input type="text" id="ruleLabel" placeholder="15% off"></label>
+      <button type="button" id="addRuleBtn" class="btn primary">Add Rule</button>
     </div>
-  </header>
+  </form>
+  <div id="rulesList" class="rules"></div>
+</section>
 
-  <nav class="tabs" role="tablist" aria-label="Main Navigation">
-    <button class="tab active" data-tab="clients" role="tab" aria-selected="true">Clients</button>
-    <button class="tab" data-tab="rewards" role="tab" aria-selected="false">Rewards</button>
-    <button class="tab" data-tab="settings" role="tab" aria-selected="false">Settings</button>
-  </nav>
-
-  <main>
-    <section id="tab-clients" class="tab-panel active" role="tabpanel">
-      <div class="toolbar">
-        <input id="searchInput" class="search" type="search" placeholder="Search clients..." />
-        <button id="addClientBtn" class="btn primary">+ New</button>
-      </div>
-      <div id="clientsList" class="cards clean" tabindex="-1"></div>
-    </section>
-
-    <section id="tab-rewards" class="tab-panel" role="tabpanel">
-      <div class="info">
-        <h2>Reward Rules</h2>
-        <p>Add perks that unlock after a number of punches (e.g., 3 → 15% off).</p>
-      </div>
-      <form id="rewardsForm" class="rewards-form">
-        <div class="row">
-          <label class="inline">Punches
-            <input type="number" id="rulePunches" min="1" value="3" />
-          </label>
-          <label class="inline">Reward Label
-            <input type="text" id="ruleLabel" placeholder="15% off" />
-          </label>
-          <button type="button" id="addRuleBtn" class="btn primary">Add Rule</button>
-        </div>
-      </form>
-      <div id="rulesList" class="rules"></div>
-    </section>
-
-    <section id="tab-settings" class="tab-panel" role="tabpanel">
-      <div class="info">
-        <h2>Business</h2>
-        <div class="row">
-          <label class="inline">Business Name
-            <input type="text" id="businessName" placeholder="Wanderlust Lash Bar" />
-          </label>
-          <label class="inline">Brand Color
-            <input type="color" id="brandColor" value="#ff6ea6" />
-          </label>
-        </div>
-        <div class="row">
-          <label class="inline">Theme
-            <select id="shareTheme">
-              <option value="classic">Classic</option>
-              <option value="girly">Girly</option>
-              <option value="minimal-blush">Minimal Blush</option>
-              <option value="candy-pop">Candy Pop</option>
-              <option value="luxe-mono">Luxe Mono</option>
-            </select>
-          </label>
-          <label class="inline">Cute headings
-            <input type="checkbox" id="emojiHeadings" />
-          </label>
-        </div>
-        <div class="row">
-          <button id="copyOwnerKeyBtn" class="btn">Copy Owner Key</button>
-          <button id="forceRefreshBtn" class="btn">Force App Refresh</button>
-        </div>
-        <small>Branding + rules sync to the public share page.</small>
-      </div>
-    </section>
-  </main>
-
-  <button id="fabAdd" class="fab" aria-label="Add client">＋</button>
-
-  <dialog id="clientModal" class="modal">
-    <form method="dialog" id="clientForm" class="modal-card">
-      <h3 id="clientModalTitle">New Client</h3>
-      <input type="hidden" id="clientId" />
-      <label>Name <input id="clientName" type="text" required placeholder="Client name" /></label>
-      <label>Phone (optional) <input id="clientPhone" type="tel" placeholder="(555) 123-4567" /></label>
-      <label>Reward Goal <input id="clientGoal" type="number" min="1" value="10" required /></label>
-      <menu class="modal-actions">
-        <button value="cancel" class="btn ghost">Cancel</button>
-        <button id="saveClientBtn" value="default" class="btn primary">Save</button>
-      </menu>
-    </form>
-  </dialog>
-
-  <dialog id="detailModal" class="modal">
-    <div class="modal-card">
-      <h3 id="detailTitle">Client</h3>
-      <div id="detailInfo" class="muted"></div>
-      <div class="progress"><div id="detailProgress" style="width:0%"></div></div>
-      <div id="detailHint" class="muted" style="margin:6px 0 0"></div>
-      <div id="detailUpcoming" class="muted" style="margin:4px 0 8px"></div>
-      <div class="row" style="margin:8px 0">
-        <button class="btn primary" id="detailPunchBtn">Punch +1</button>
-        <button class="btn" id="detailRedeemBtn" disabled>Redeem</button>
-        <button class="btn" id="detailShareBtn">Share</button>
-        <button class="btn ghost" id="detailEditBtn">Edit</button>
-      </div>
-      <div id="detailHistory" class="feed" style="max-height:40vh;overflow:auto;"></div>
-      <div class="modal-actions">
-        <button class="btn danger" id="detailDeleteBtn">Delete</button>
-        <button class="btn" id="detailCloseBtn">Close</button>
-      </div>
+<section id="tab-settings" class="tab-panel">
+  <div class="info">
+    <h2>Business</h2>
+    <div class="row">
+      <label class="inline">Business Name <input type="text" id="businessName" placeholder="Wanderlust Lash Bar"></label>
+      <label class="inline">Brand Color <input type="color" id="brandColor" value="#ff6ea6"></label>
     </div>
-  </dialog>
-
-  <dialog id="shareModal" class="modal">
-    <div class="modal-card">
-      <h3>Share Client Progress</h3>
-      <input id="shareLinkInput" class="search" readonly />
-      <div id="qrArea" style="display:grid;place-items:center;margin:12px 0;"></div>
-      <div class="modal-actions">
-        <button class="btn ghost" id="copyLinkBtn">Copy Link</button>
-        <button class="btn primary" id="closeShareBtn">Done</button>
-      </div>
+  </div>
+  <div class="info" style="margin-top:12px">
+    <h2>Appearance</h2>
+    <div class="row">
+      <label class="inline">Header Text Color <input type="color" id="headerTextColor" value="#111111"></label>
+      <label class="inline">Header Background <input type="color" id="headerBgColor" value="#ffffff"></label>
     </div>
-  </dialog>
-
-  <dialog id="redeemPicker" class="modal">
-    <div class="modal-card">
-      <h3>Choose a reward to redeem</h3>
-      <div id="redeemOptions" class="rules" style="margin-top:8px"></div>
-      <div class="modal-actions">
-        <button class="btn" id="redeemCancelBtn">Cancel</button>
-      </div>
+    <div class="row">
+      <label>Header Logo <input type="file" id="headerLogoInput" accept="image/*"></label>
     </div>
-  </dialog>
+    <div class="row">
+      <label>App Background Photo <input type="file" id="bgImageInput" accept="image/*"></label>
+      <button type="button" class="btn" id="removeBgBtn">Remove Background</button>
+    </div>
+    <div class="row">
+      <label class="inline">Card Style
+        <select id="cardStyle">
+          <option value="classic">Classic</option>
+          <option value="softpink">Soft Pink</option>
+          <option value="glass">Glass</option>
+          <option value="cute">Cute</option>
+        </select>
+      </label>
+      <label class="inline"><input type="checkbox" id="showBadges" checked> Show eligible badge</label>
+      <label class="inline"><input type="checkbox" id="showUpcoming" checked> Show upcoming tiers</label>
+    </div>
+    <div class="row">
+      <label class="inline">Theme
+        <select id="shareTheme">
+          <option value="classic">Classic</option>
+          <option value="girly">Girly</option>
+          <option value="minimal-blush">Minimal Blush</option>
+          <option value="candy-pop">Candy Pop</option>
+          <option value="luxe-mono">Luxe Mono</option>
+        </select>
+      </label>
+      <label class="inline">Font
+        <select id="shareFont">
+          <option value="system-ui">System (default)</option>
+          <option value="Poppins">Poppins</option>
+          <option value="Quicksand">Quicksand</option>
+          <option value="Nunito">Nunito</option>
+          <option value="Playfair Display">Playfair Display</option>
+          <option value="Pacifico">Pacifico</option>
+        </select>
+      </label>
+      <label class="inline"><input type="checkbox" id="emojiHeadings"> Cute emoji in headings 💖</label>
+    </div>
+    <div class="row">
+      <button type="button" id="forceRefreshBtn" class="btn">Force App Refresh</button>
+      <button type="button" id="copyOwnerKeyBtn" class="btn">Copy Owner Key</button>
+    </div>
+  </div>
+</section>
+</main>
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+<button id="fabAdd" class="fab" aria-label="Add client">＋</button>
 
-  <script src="qrcode.min.js" defer></script>
-  <script src="config.js" defer></script>
-  <script src="app.js" defer></script>
-</body>
-</html>
+<dialog id="clientModal" class="modal">
+  <form method="dialog" id="clientForm" class="modal-card">
+    <h3 id="clientModalTitle">New Client</h3>
+    <input type="hidden" id="clientId"/>
+    <label>Name <input id="clientName" type="text" required placeholder="Client name"/></label>
+    <label>Phone <input id="clientPhone" type="tel" placeholder="(555) 123-4567)"/></label>
+    <label>Reward Goal <input id="clientGoal" type="number" min="1" value="10" required/></label>
+    <menu class="modal-actions">
+      <button type="button" id="clientCancelBtn" class="btn">Cancel</button>
+      <button id="saveClientBtn" value="default" class="btn primary">Save</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="detailModal" class="modal">
+  <div class="modal-card">
+    <h3 id="detailTitle">Client</h3>
+    <div id="detailInfo" class="muted"></div>
+    <div class="progress"><div id="detailProgress" style="width:0%"></div></div>
+    <div id="detailHint" class="muted" style="margin:6px 0 0"></div>
+    <div id="detailUpcoming" class="muted" style="margin:4px 0 8px"></div>
+    <div class="row" style="margin:8px 0">
+      <button class="btn primary" id="detailPunchBtn">Punch +1</button>
+      <button class="btn" id="detailRedeemBtn" disabled>Redeem</button>
+      <button class="btn" id="detailShareBtn">Share</button>
+      <button class="btn" id="detailEditBtn">Edit</button>
+    </div>
+    <div id="detailHistory" class="feed" style="max-height:40vh;overflow:auto;"></div>
+    <div class="modal-actions">
+      <button class="btn danger" id="detailDeleteBtn">Delete</button>
+      <button class="btn" id="detailCloseBtn">Close</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="shareModal" class="modal">
+  <div class="modal-card">
+    <h3>Share Client Progress</h3>
+    <input id="shareLinkInput" class="search" readonly>
+    <div id="qrArea" style="display:grid;place-items:center;margin:12px 0;"></div>
+    <div class="modal-actions">
+      <button class="btn" id="copyLinkBtn">Copy Link</button>
+      <button class="btn primary" id="closeShareBtn">Done</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="redeemPicker" class="modal">
+  <div class="modal-card">
+    <h3>Choose a reward to redeem</h3>
+    <div id="redeemOptions" class="rules" style="margin-top:8px"></div>
+    <div class="modal-actions"><button class="btn" id="redeemCancelBtn">Cancel</button></div>
+  </div>
+</dialog>
+
+<div id="toast" class="toast" aria-live="polite"></div>
+
+<script src="qrcode.min.js" defer></script>
+<script src="config.js" defer></script>
+<script src="app.js" defer></script>
+</body></html>
