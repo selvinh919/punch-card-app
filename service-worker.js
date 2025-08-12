@@ -1,4 +1,4 @@
-const CACHE = 'wanderlust-punchcard-v2_5';
+const CACHE = 'wanderlust-punchcard-v2_6';
 const ASSETS = [
   './',
   './index.html',

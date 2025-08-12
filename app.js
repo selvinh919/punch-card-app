@@ -1,7 +1,7 @@
-/* Wanderlust Lash Bar — Punch Card v2.5 (appearance customization + branding sync + cute UI) */
+/* Wanderlust Lash Bar — Punch Card v2.6 (themes + fonts + emoji + more robust share) */
 const $ = (s)=>document.querySelector(s);
 const $$ = (s)=>Array.from(document.querySelectorAll(s));
-const storeKey = 'punchcard:v2_5';
+const storeKey = 'punchcard:v2_6';
 
 function debounce(fn, delay=1500){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), delay); }; }
 
@@ -15,9 +15,7 @@ function save(){
     document.documentElement.style.setProperty('--header-text', state.settings?.headerTextColor || '#111111');
     document.documentElement.style.setProperty('--header-bg', state.settings?.headerBgColor || '#ffffff');
     $('#brandTitle').textContent = state.settings?.businessName || 'Wanderlust Lash Bar';
-    // logo
     const logo = $('#headerLogo'); if (logo){ if (state.settings?.headerLogoData){ logo.src = state.settings.headerLogoData; } else { logo.src = 'logo-lash.svg'; } }
-    // background image
     if (state.settings?.bgImageData){ document.body.style.backgroundImage = `url(${state.settings.bgImageData})`; } else { document.body.style.backgroundImage = ''; }
   } catch {}
   debouncedCloudBackup();
@@ -44,7 +42,9 @@ function seed(){
       cardStyle:'classic',
       showBadges:true,
       showUpcoming:true,
-      shareTheme:'classic'
+      shareTheme:'classic',
+      shareFont:'system-ui',
+      emojiHeadings:false
     },
     clients:[], activity:[]
   };
@@ -59,6 +59,8 @@ function render(){
   if ($('#headerBgColor')) $('#headerBgColor').value = state.settings.headerBgColor || '#ffffff';
   if ($('#cardStyle')) $('#cardStyle').value = state.settings.cardStyle || 'classic';
   if ($('#shareTheme')) $('#shareTheme').value = state.settings.shareTheme || 'classic';
+  if ($('#shareFont')) $('#shareFont').value = state.settings.shareFont || 'system-ui';
+  if ($('#emojiHeadings')) $('#emojiHeadings').checked = !!state.settings.emojiHeadings;
   if ($('#showBadges')) $('#showBadges').checked = !!state.settings.showBadges;
   if ($('#showUpcoming')) $('#showUpcoming').checked = !!state.settings.showUpcoming;
 }
@@ -97,7 +99,7 @@ function achievedBadgeFor(client){
   return achieved ? `Eligible: ${achieved.label}` : '';
 }
 
-// ---- Clients (clean list) ----
+// ---- Clients ----
 function renderClients(query){
   const wrap = $('#clientsList'); if (!wrap) return;
   wrap.innerHTML = '';
@@ -130,12 +132,12 @@ function renderClients(query){
   }
 }
 
-// ---- Client detail dialog ----
+// ---- Client detail ----
 let currentDetailId = null;
 function openDetail(id){
   const c = state.clients.find(x=>x.id===id); if (!c) return;
   currentDetailId = id;
-  $('#detailTitle').textContent = c.name;
+  $('#detailTitle').textContent = (state.settings.emojiHeadings?'💖 ':'') + c.name;
   $('#detailInfo').textContent = (c.phone?c.phone+' · ':'') + `${c.punches}/${c.goal} punches`;
   const pct = c.goal ? Math.min(100, Math.round((c.punches / c.goal) * 100)) : 0;
   $('#detailProgress').style.width = pct + '%';
@@ -183,7 +185,7 @@ function renderRules(){
   }
 }
 
-// ---- Image helpers (compress to fit localStorage) ----
+// ---- Image helpers ----
 async function fileToDataURLCompressed(file, maxW=1600, quality=0.8){
   const img = new Image();
   const reader = new FileReader();
@@ -294,7 +296,7 @@ async function loadRulesFromCloud(){
   if (Array.isArray(rows)){ state.settings.rewardsRules = rows; save(); renderRules(); renderClients($('#searchInput')?.value||''); }
 }
 
-// Branding sync (only appearance fields)
+// Branding sync (appearance fields)
 async function supabaseUpsertBranding(){
   if (!window.PUNCH_CONFIG?.SUPABASE_URL) return;
   const url = `${window.PUNCH_CONFIG.SUPABASE_URL}/rest/v1/branding`;
@@ -305,6 +307,8 @@ async function supabaseUpsertBranding(){
     header_text_color: state.settings.headerTextColor,
     header_bg_color: state.settings.headerBgColor,
     share_theme: state.settings.shareTheme,
+    share_font: state.settings.shareFont,
+    emoji_headings: !!state.settings.emojiHeadings,
     card_style: state.settings.cardStyle,
     show_badges: !!state.settings.showBadges,
     show_upcoming: !!state.settings.showUpcoming,
@@ -386,6 +390,8 @@ window.addEventListener('DOMContentLoaded', ()=>{
   $('#headerBgColor')?.addEventListener('input', e=>{ state.settings.headerBgColor = e.target.value || '#ffffff'; save(); render(); });
   $('#cardStyle')?.addEventListener('change', e=>{ state.settings.cardStyle = e.target.value; save(); render(); });
   $('#shareTheme')?.addEventListener('change', e=>{ state.settings.shareTheme = e.target.value; save(); });
+  $('#shareFont')?.addEventListener('change', e=>{ state.settings.shareFont = e.target.value; save(); });
+  $('#emojiHeadings')?.addEventListener('change', e=>{ state.settings.emojiHeadings = !!e.target.checked; save(); });
   $('#showBadges')?.addEventListener('change', e=>{ state.settings.showBadges = !!e.target.checked; save(); render(); });
   $('#showUpcoming')?.addEventListener('change', e=>{ state.settings.showUpcoming = !!e.target.checked; save(); render(); });
 

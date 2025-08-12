@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Reward Progress</title>
   <meta name="theme-color" content="#ff6ea6" />
+  <style id="dynamicFont"></style>
   <style>
     :root{
       --brand:#ff6ea6;
       --text:#111;
     }
-    body{font:16px/1.45 system-ui,Segoe UI,Roboto,Arial;margin:0;background:#fff;color:var(--text);min-height:100dvh;padding:16px;display:grid;place-items:center;background-size:cover;background-attachment:fixed;background-position:center}
+    body{font:16px/1.5 system-ui,Segoe UI,Roboto,Arial;margin:0;background:#fff;color:var(--text);min-height:100dvh;padding:16px;display:grid;place-items:center;background-size:cover;background-attachment:fixed;background-position:center}
     .wrap{max-width:560px;width:100%}
     .head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
     .head img{height:28px}
@@ -21,7 +22,7 @@
     .bar{height:12px;border-radius:999px;background:#f3f4f6;overflow:hidden;border:1px solid #e5e7eb;margin:12px 0}
     .bar>div{height:100%;background:linear-gradient(90deg,var(--brand),#ff9fc3)}
     .badge{display:inline-block;padding:2px 10px;border-radius:999px;background:#f0f9ff;color:#075985;border:1px solid #bae6fd;font-size:.9rem}
-    .girly body{{background:linear-gradient(180deg,#fff,#ffe4ef)}}
+    .err{border:1px solid #fecaca;background:#fff1f2;color:#b91c1c;border-radius:12px;padding:12px}
   </style>
 </head>
 <body>
@@ -37,59 +38,101 @@
       <div><span class="badge" id="eligible" style="display:none"></span></div>
       <div class="muted" id="hint" style="margin-top:6px"></div>
       <div class="muted" id="upcoming" style="margin-top:2px"></div>
+      <div id="errorBox" style="display:none;margin-top:8px" class="err"></div>
       <footer style="margin-top:12px;color:#6b7280">This page updates whenever your stylist records a visit.</footer>
     </div>
   </div>
 
   <script src="config.js"></script>
   <script>
+    function fontLinkFor(name){
+      if (!name || name==='system-ui') return '';
+      const q = encodeURIComponent(name);
+      return 'https://fonts.googleapis.com/css2?family=' + q + ':wght@400;600;700&display=swap';
+    }
+    function applyTheme(theme){
+      const body = document.body;
+      if (theme==='girly'){ body.style.backgroundImage = 'linear-gradient(180deg,#fff,#ffe4ef)'; }
+      else if (theme==='minimal-blush'){ body.style.backgroundImage = 'linear-gradient(180deg,#fff6f9,#ffe1ee)'; }
+      else if (theme==='candy-pop'){ body.style.backgroundImage = 'radial-gradient(#ffd1e6 1px, transparent 1px), radial-gradient(#ffd1e6 1px, transparent 1px)'; body.style.backgroundPosition='0 0, 8px 8px'; body.style.backgroundSize='16px 16px'; }
+      else if (theme==='luxe-mono'){ body.style.backgroundImage = 'none'; body.style.backgroundColor='#fff'; }
+    }
+    function setError(msg){
+      const box = document.getElementById('errorBox');
+      box.textContent = msg;
+      box.style.display = 'block';
+    }
+
     (async function(){
       const params = new URLSearchParams(location.search);
       const slug = params.get('c');
       const card = document.getElementById('card');
-      if (!slug){ card.innerHTML = '<p>Missing link.</p>'; return; }
-      if (!window.PUNCH_CONFIG?.SUPABASE_URL){ card.innerHTML = '<p>Not configured.</p>'; return; }
+      if (!slug){ card.innerHTML = '<p class="err">Missing link parameter (?c=...)</p>'; return; }
+      if (!window.PUNCH_CONFIG?.SUPABASE_URL){ card.innerHTML = '<p class="err">Not configured. Please set SUPABASE_URL in config.js.</p>'; return; }
       const headers = { apikey: window.PUNCH_CONFIG.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + window.PUNCH_CONFIG.SUPABASE_ANON_KEY };
 
-      // 1) Load client (incl owner_key)
+      // 1) Load client (incl owner_key when available)
       const urlClient = window.PUNCH_CONFIG.SUPABASE_URL + '/rest/v1/clients?select=name,goal,punches,total_rewards,last_visit,owner_key&public_slug=eq.' + encodeURIComponent(slug);
-      const resC = await fetch(urlClient, { headers }); if (!resC.ok){ card.innerHTML = '<p>Could not load.</p>'; return; }
-      const rows = await resC.json(); if (!rows.length){ card.innerHTML = '<p>Link not found.</p>'; return; }
-      const c = rows[0];
+      let c = null;
+      try{
+        const resC = await fetch(urlClient, { headers });
+        if (!resC.ok){
+          const t = await resC.text();
+          setError('Could not load client (check Supabase URL/key and SQL). ' + t.slice(0,160));
+          return;
+        }
+        const rows = await resC.json();
+        if (!rows.length){ setError('Link not found. Ask your stylist to share a new link.'); return; }
+        c = rows[0];
+      }catch(err){
+        setError('Network error loading client. Please check your internet or try again.');
+        return;
+      }
 
-      // 2) Load rules + branding for this owner
+      // 2) Load rules + branding if we have owner_key
       let rules = [];
       let branding = null;
-      try{
-        const urlRules = window.PUNCH_CONFIG.SUPABASE_URL + '/rest/v1/rules?select=punches,label&owner_key=eq.' + encodeURIComponent(c.owner_key) + '&order=punches.asc';
-        const resR = await fetch(urlRules, { headers });
-        if (resR.ok) rules = await resR.json();
+      if (c.owner_key){
+        try{
+          const urlRules = window.PUNCH_CONFIG.SUPABASE_URL + '/rest/v1/rules?select=punches,label&owner_key=eq.' + encodeURIComponent(c.owner_key) + '&order=punches.asc';
+          const resR = await fetch(urlRules, { headers });
+          if (resR.ok) rules = await resR.json();
+        }catch{ /* silent */ }
+        try{
+          const urlBrand = window.PUNCH_CONFIG.SUPABASE_URL + '/rest/v1/branding?select=*&owner_key=eq.' + encodeURIComponent(c.owner_key);
+          const resB = await fetch(urlBrand, { headers });
+          if (resB.ok){ const arr = await resB.json(); branding = arr[0] || null; }
+        }catch{ /* silent */ }
+      }
 
-        const urlBrand = window.PUNCH_CONFIG.SUPABASE_URL + '/rest/v1/branding?select=*&owner_key=eq.' + encodeURIComponent(c.owner_key);
-        const resB = await fetch(urlBrand, { headers });
-        if (resB.ok){ const arr = await resB.json(); branding = arr[0] || null; }
-      }catch{}
-
-      // 3) Apply branding
+      // 3) Apply branding (theme/font/logo/color)
       if (branding){
         document.documentElement.style.setProperty('--brand', branding.brand_color || '#ff6ea6');
         document.getElementById('biz').textContent = branding.business_name || 'Wanderlust Lash Bar';
         if (branding.header_logo_data){
           const img = document.getElementById('logo'); img.src = branding.header_logo_data; img.style.display = 'block';
         }
-        if (branding.header_bg_color || branding.header_text_color){
-          document.body.style.color = branding.header_text_color || '#111';
-        }
         if (branding.bg_image_data){
           document.body.style.backgroundImage = 'url(' + branding.bg_image_data + ')';
         }
-        if ((branding.share_theme||'') === 'girly'){
-          document.body.style.backgroundImage = document.body.style.backgroundImage || 'linear-gradient(180deg,#fff,#ffe4ef)';
+        applyTheme(branding.share_theme || 'classic');
+        const font = (branding.share_font || '').trim();
+        if (font && font !== 'system-ui'){
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = fontLinkFor(font);
+          document.head.appendChild(link);
+          document.getElementById('dynamicFont').textContent = '*{font-family:"' + font.replace(/"/g,'') + '", system-ui, -apple-system, Segoe UI, Roboto, Arial}';
+        }
+        if (branding.emoji_headings){
+          const nameEl = document.getElementById('name');
+          if (nameEl && !nameEl.textContent.startsWith('💖 ')) nameEl.textContent = '💖 ' + nameEl.textContent;
+          document.title = '💖 Reward Progress';
         }
       }
 
       // 4) Render UI + hints
-      document.getElementById('name').textContent = c.name;
+      document.getElementById('name').textContent = (branding && branding.emoji_headings ? '💖 ' : '') + (c.name || 'Client');
       const pct = c.goal ? Math.min(100, Math.round((c.punches / c.goal)*100)) : 0;
       document.getElementById('prog').style.width = pct + '%';
       document.getElementById('updated').textContent = 'Updated ' + new Date(c.last_visit||Date.now()).toLocaleString();

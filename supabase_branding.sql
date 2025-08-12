@@ -6,6 +6,8 @@ create table if not exists public.branding (
   header_text_color text,
   header_bg_color text,
   share_theme text,
+  share_font text,
+  emoji_headings boolean,
   card_style text,
   show_badges boolean,
   show_upcoming boolean,

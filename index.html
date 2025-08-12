@@ -135,7 +135,22 @@
             <select id="shareTheme">
               <option value="classic">Classic</option>
               <option value="girly">Girly</option>
+              <option value="minimal-blush">Minimal Blush</option>
+              <option value="candy-pop">Candy Pop</option>
+              <option value="luxe-mono">Luxe Mono</option>
             </select>
+            <select id="shareFont">
+              <option value="system-ui">System (default)</option>
+              <option value="Poppins">Poppins</option>
+              <option value="Quicksand">Quicksand</option>
+              <option value="Nunito">Nunito</option>
+              <option value="Playfair Display">Playfair Display</option>
+              <option value="Pacifico">Pacifico (script)</option>
+            </select>
+            <label class="inline">
+              <input type="checkbox" id="emojiHeadings" />
+              Cute emoji in headings 💖
+            </label>
           </div>
           <small>These settings sync to the public link so clients see your branding.</small>
         </form>
@@ -232,7 +247,6 @@
     </div>
   </dialog>
 
-  <!-- Share Modal -->
   <dialog id="shareModal" class="modal">
     <div class="modal-card">
       <h3>Share Client Progress</h3>
