@@ -28,6 +28,17 @@ function nowISO(){ return new Date().toISOString(); }
 function fmtDate(iso){ const d = new Date(iso); return d.toLocaleString(undefined, {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}); }
 function escapeHTML(s){ return (s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
+function applyAppTheme(theme){
+  // If a custom background image is set, let that win
+  if (state.settings?.bgImageData){ document.body.style.backgroundImage = `url(${state.settings.bgImageData})`; document.body.style.backgroundColor=''; return; }
+  document.body.style.backgroundImage = ''; document.body.style.backgroundColor='';
+  if (theme==='girly'){ document.body.style.backgroundImage = 'linear-gradient(180deg,#fff,#ffe4ef)'; }
+  else if (theme==='minimal-blush'){ document.body.style.backgroundImage = 'linear-gradient(180deg,#fff6f9,#ffe1ee)'; }
+  else if (theme==='candy-pop'){ document.body.style.backgroundImage = 'radial-gradient(#ffd1e6 1px, transparent 1px), radial-gradient(#ffd1e6 1px, transparent 1px)'; document.body.style.backgroundPosition='0 0, 8px 8px'; document.body.style.backgroundSize='16px 16px'; }
+  else if (theme==='luxe-mono'){ document.body.style.backgroundColor = '#ffffff'; }
+}
+
+
 function seed(){
   return {
     settings:{
@@ -405,7 +416,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
   $('#headerTextColor')?.addEventListener('input', e=>{ state.settings.headerTextColor = e.target.value || '#111111'; save(); render(); });
   $('#headerBgColor')?.addEventListener('input', e=>{ state.settings.headerBgColor = e.target.value || '#ffffff'; save(); render(); });
   $('#cardStyle')?.addEventListener('change', e=>{ state.settings.cardStyle = e.target.value; save(); render(); });
-  $('#shareTheme')?.addEventListener('change', e=>{ state.settings.shareTheme = e.target.value; save(); });
+  $('#shareTheme')?.addEventListener('change', e=>{ state.settings.shareTheme = e.target.value; save(); applyAppTheme(state.settings.shareTheme); });
   $('#shareFont')?.addEventListener('change', e=>{ state.settings.shareFont = e.target.value; save(); });
   $('#emojiHeadings')?.addEventListener('change', e=>{ state.settings.emojiHeadings = !!e.target.checked; save(); });
   $('#showBadges')?.addEventListener('change', e=>{ state.settings.showBadges = !!e.target.checked; save(); render(); });

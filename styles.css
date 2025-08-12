@@ -92,3 +92,8 @@ main{padding:12px 14px 80px;max-width:1100px;margin:0 auto}
 /* iOS standalone safe area */
 .standalone .app-bar{padding-top:calc(14px + env(safe-area-inset-top))}
 .fab{margin-bottom:env(safe-area-inset-bottom)}
+
+
+/* Tab panels */
+.tab-panel{display:none}
+.tab-panel.active{display:block}
