@@ -1,4 +1,4 @@
--- Clients table (add owner_key to tie to rules)
+-- Clients table (with owner_key)
 create table if not exists public.clients (
   id text primary key,
   owner_key text,
@@ -11,16 +11,12 @@ create table if not exists public.clients (
   public_slug text unique not null,
   updated_at timestamptz default now()
 );
-
--- If table existed already, ensure owner_key column exists
 do $$ begin
   if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='clients' and column_name='owner_key') then
     alter table public.clients add column owner_key text;
   end if;
 end $$;
-
 alter table public.clients enable row level security;
-
 create policy if not exists "Public read clients" on public.clients for select to anon using ( true );
 create policy if not exists "Anon upsert clients" on public.clients for insert to anon with check ( true );
 create policy if not exists "Anon update clients" on public.clients for update to anon using ( true ) with check ( true );

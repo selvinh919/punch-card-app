@@ -1,30 +1,44 @@
 <!doctype html>
-<html lang="="en">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Reward Progress</title>
   <meta name="theme-color" content="#ff6ea6" />
   <style>
-    body{font:16px/1.45 system-ui,Segoe UI,Roboto,Arial;margin:0;background:#fff;color:#111;display:grid;place-items:center;min-height:100dvh;padding:16px}
-    .card{max-width:520px;width:100%;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:16px}
+    :root{
+      --brand:#ff6ea6;
+      --text:#111;
+    }
+    body{font:16px/1.45 system-ui,Segoe UI,Roboto,Arial;margin:0;background:#fff;color:var(--text);min-height:100dvh;padding:16px;display:grid;place-items:center;background-size:cover;background-attachment:fixed;background-position:center}
+    .wrap{max-width:560px;width:100%}
+    .head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .head img{height:28px}
+    .title{font-size:18px;margin:0}
+    .card{width:100%;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:16px;background:#fff}
     h1{font-size:22px;margin:0 0 10px}
     .muted{color:#6b7280}
     .bar{height:12px;border-radius:999px;background:#f3f4f6;overflow:hidden;border:1px solid #e5e7eb;margin:12px 0}
-    .bar>div{height:100%;background:linear-gradient(90deg,#ff6ea6,#ff9fc3)}
-    .badge{display:inline-block;padding:2px 10px;border-radius:999px;background:#fdf2f8;color:#831843;border:1px solid #fbcfe8;font-size:.9rem}
-    footer{margin-top:12px;color:#6b7280}
+    .bar>div{height:100%;background:linear-gradient(90deg,var(--brand),#ff9fc3)}
+    .badge{display:inline-block;padding:2px 10px;border-radius:999px;background:#f0f9ff;color:#075985;border:1px solid #bae6fd;font-size:.9rem}
+    .girly body{{background:linear-gradient(180deg,#fff,#ffe4ef)}}
   </style>
 </head>
 <body>
-  <div class="card" id="card">
-    <h1 id="name">Client</h1>
-    <div class="muted" id="biz">Wanderlust Lash Bar</div>
-    <div class="muted" id="updated"></div>
-    <div class="bar"><div id="prog" style="width:0%"></div></div>
-    <div><span class="badge" id="counts">0/0 punches</span></div>
-    <div class="muted" id="hint" style="margin-top:6px"></div>
-    <footer>This page updates whenever your stylist records a visit.</footer>
+  <div class="wrap">
+    <div class="head">
+      <img id="logo" alt="" style="display:none"/>
+      <h2 class="title" id="biz">Wanderlust Lash Bar</h2>
+    </div>
+    <div class="card" id="card">
+      <h1 id="name">Client</h1>
+      <div class="muted" id="updated"></div>
+      <div class="bar"><div id="prog" style="width:0%"></div></div>
+      <div><span class="badge" id="eligible" style="display:none"></span></div>
+      <div class="muted" id="hint" style="margin-top:6px"></div>
+      <div class="muted" id="upcoming" style="margin-top:2px"></div>
+      <footer style="margin-top:12px;color:#6b7280">This page updates whenever your stylist records a visit.</footer>
+    </div>
   </div>
 
   <script src="config.js"></script>
@@ -35,40 +49,65 @@
       const card = document.getElementById('card');
       if (!slug){ card.innerHTML = '<p>Missing link.</p>'; return; }
       if (!window.PUNCH_CONFIG?.SUPABASE_URL){ card.innerHTML = '<p>Not configured.</p>'; return; }
-
       const headers = { apikey: window.PUNCH_CONFIG.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + window.PUNCH_CONFIG.SUPABASE_ANON_KEY };
 
-      // 1) Load client (including owner_key)
+      // 1) Load client (incl owner_key)
       const urlClient = window.PUNCH_CONFIG.SUPABASE_URL + '/rest/v1/clients?select=name,goal,punches,total_rewards,last_visit,owner_key&public_slug=eq.' + encodeURIComponent(slug);
       const resC = await fetch(urlClient, { headers }); if (!resC.ok){ card.innerHTML = '<p>Could not load.</p>'; return; }
       const rows = await resC.json(); if (!rows.length){ card.innerHTML = '<p>Link not found.</p>'; return; }
       const c = rows[0];
 
-      // 2) Load rules for this owner
+      // 2) Load rules + branding for this owner
       let rules = [];
+      let branding = null;
       try{
         const urlRules = window.PUNCH_CONFIG.SUPABASE_URL + '/rest/v1/rules?select=punches,label&owner_key=eq.' + encodeURIComponent(c.owner_key) + '&order=punches.asc';
         const resR = await fetch(urlRules, { headers });
         if (resR.ok) rules = await resR.json();
+
+        const urlBrand = window.PUNCH_CONFIG.SUPABASE_URL + '/rest/v1/branding?select=*&owner_key=eq.' + encodeURIComponent(c.owner_key);
+        const resB = await fetch(urlBrand, { headers });
+        if (resB.ok){ const arr = await resB.json(); branding = arr[0] || null; }
       }catch{}
 
-      // 3) Render UI + hint
+      // 3) Apply branding
+      if (branding){
+        document.documentElement.style.setProperty('--brand', branding.brand_color || '#ff6ea6');
+        document.getElementById('biz').textContent = branding.business_name || 'Wanderlust Lash Bar';
+        if (branding.header_logo_data){
+          const img = document.getElementById('logo'); img.src = branding.header_logo_data; img.style.display = 'block';
+        }
+        if (branding.header_bg_color || branding.header_text_color){
+          document.body.style.color = branding.header_text_color || '#111';
+        }
+        if (branding.bg_image_data){
+          document.body.style.backgroundImage = 'url(' + branding.bg_image_data + ')';
+        }
+        if ((branding.share_theme||'') === 'girly'){
+          document.body.style.backgroundImage = document.body.style.backgroundImage || 'linear-gradient(180deg,#fff,#ffe4ef)';
+        }
+      }
+
+      // 4) Render UI + hints
       document.getElementById('name').textContent = c.name;
       const pct = c.goal ? Math.min(100, Math.round((c.punches / c.goal)*100)) : 0;
       document.getElementById('prog').style.width = pct + '%';
-      document.getElementById('counts').textContent = (c.punches||0) + '/' + (c.goal||0) + ' punches';
       document.getElementById('updated').textContent = 'Updated ' + new Date(c.last_visit||Date.now()).toLocaleString();
 
-      const next = rules.find(r => r.punches > (c.punches||0));
+      const current = c.punches || 0;
+      const next = rules.find(r => r.punches > current);
+      const eligible = rules.filter(r => r.punches <= current).sort((a,b)=>b.punches-a.punches)[0];
+      if (eligible){ const el = document.getElementById('eligible'); el.textContent = 'Eligible: ' + eligible.label; el.style.display = 'inline-block'; }
       let hint = '';
       if (next){
-        const rem = next.punches - (c.punches||0);
+        const rem = next.punches - current;
         hint = rem + ' more ' + (rem===1?'punch':'punches') + ' until ' + next.label;
-      } else {
-        const achieved = rules.filter(r=> r.punches <= (c.punches||0)).sort((a,b)=>b.punches-a.punches)[0];
-        if (achieved) hint = 'Eligible: ' + achieved.label;
       }
       document.getElementById('hint').textContent = hint;
+
+      const ups = rules.filter(r=>r.punches > current);
+      const upcoming = ups.slice(0,3).map(r=> (r.punches-current) + '→' + r.label).join('; ');
+      document.getElementById('upcoming').textContent = upcoming ? ('Next: ' + upcoming) : '';
     })();
   </script>
 </body>

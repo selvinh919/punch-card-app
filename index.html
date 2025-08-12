@@ -11,9 +11,9 @@
   <script>if (navigator.standalone) { document.documentElement.classList.add('standalone'); }</script>
 </head>
 <body>
-  <header class="app-bar">
+  <header class="app-bar" id="headerBar">
     <div class="brand-wrap">
-      <img src="logo-lash.svg" alt="Lash logo" class="lash-logo" />
+      <img src="logo-lash.svg" alt="Lash logo" class="lash-logo" id="headerLogo" />
       <h1 id="brandTitle">Wanderlust Lash Bar</h1>
     </div>
     <div class="right-tools">
@@ -57,7 +57,7 @@
           </label>
           <button type="button" id="addRuleBtn" class="btn primary">Add Rule</button>
         </div>
-        <small>Rules are global and can be combined with per-client goals if you want.</small>
+        <small>Rules are global. They appear in the app and on the client share page.</small>
       </form>
       <div id="rulesList" class="rules"></div>
     </section>
@@ -66,6 +66,7 @@
     <section id="tab-settings" class="tab-panel" role="tabpanel" aria-labelledby="Settings">
       <nav class="subtabs" role="tablist" aria-label="Settings Sections">
         <button class="subtab active" data-subtab="business" aria-selected="true">Business</button>
+        <button class="subtab" data-subtab="appearance" aria-selected="false">Appearance</button>
         <button class="subtab" data-subtab="security" aria-selected="false">Security</button>
         <button class="subtab" data-subtab="cloud" aria-selected="false">Cloud</button>
         <button class="subtab" data-subtab="data" aria-selected="false">Data</button>
@@ -82,6 +83,61 @@
             Brand Color
             <input type="color" id="brandColor" value="#ff6ea6" />
           </label>
+        </form>
+      </div>
+
+      <div id="sub-appearance" class="subpanel">
+        <form class="settings-form">
+          <h2>Appearance</h2>
+          <label>
+            Header Logo (square/transparent works best)
+            <input type="file" id="headerLogoInput" accept="image/*" />
+          </label>
+          <div class="row">
+            <label class="inline">
+              Header Text Color
+              <input type="color" id="headerTextColor" value="#111111" />
+            </label>
+            <label class="inline">
+              Header Background
+              <input type="color" id="headerBgColor" value="#ffffff" />
+            </label>
+          </div>
+
+          <label>
+            App Background Photo
+            <input type="file" id="bgImageInput" accept="image/*" />
+          </label>
+          <div class="row">
+            <button type="button" class="btn" id="removeBgBtn">Remove Background</button>
+          </div>
+
+          <h3>Card Style</h3>
+          <div class="row">
+            <select id="cardStyle">
+              <option value="classic">Classic</option>
+              <option value="softpink">Soft Pink</option>
+              <option value="glass">Glass</option>
+              <option value="cute">Cute</option>
+            </select>
+            <label class="inline">
+              <input type="checkbox" id="showBadges" checked />
+              Show eligible reward badge
+            </label>
+            <label class="inline">
+              <input type="checkbox" id="showUpcoming" checked />
+              Show all upcoming tiers
+            </label>
+          </div>
+
+          <h3>Share Page Theme</h3>
+          <div class="row">
+            <select id="shareTheme">
+              <option value="classic">Classic</option>
+              <option value="girly">Girly</option>
+            </select>
+          </div>
+          <small>These settings sync to the public link so clients see your branding.</small>
         </form>
       </div>
 
@@ -103,7 +159,7 @@
             <button type="button" id="backupCloudBtn" class="btn">Force Cloud Backup</button>
             <button type="button" id="restoreCloudBtn" class="btn">Restore from Cloud</button>
           </div>
-          <small>Automatic cloud backup runs after changes. Use these if you want to force it or restore on a new device.</small>
+          <small>Automatic cloud backup runs after changes.</small>
         </form>
       </div>
 
@@ -117,7 +173,6 @@
               <span class="btn">Import Backup (file)</span>
             </label>
           </div>
-          <small>Your data is also stored locally on this device.</small>
           <div class="row" style="margin-top:1rem;">
             <button type="button" id="resetBtn" class="btn danger">Erase All Data</button>
           </div>
@@ -156,13 +211,14 @@
     </form>
   </dialog>
 
-  <!-- Client Detail Modal (history + actions + reward hint) -->
+  <!-- Client Detail Modal (history + actions + reward hint + upcoming list) -->
   <dialog id="detailModal" class="modal">
     <div class="modal-card">
       <h3 id="detailTitle">Client</h3>
       <div id="detailInfo" class="muted"></div>
       <div class="progress"><div id="detailProgress" style="width:0%"></div></div>
       <div id="detailHint" class="muted" style="margin:6px 0 0"></div>
+      <div id="detailUpcoming" class="muted" style="margin:4px 0 8px"></div>
       <div class="row" style="margin:8px 0">
         <button class="btn primary" id="detailPunchBtn">Punch +1</button>
         <button class="btn" id="detailRedeemBtn" disabled>Redeem</button>

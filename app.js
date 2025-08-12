@@ -1,7 +1,7 @@
-/* Wanderlust Lash Bar — Punch Card v2.4 (reward hints + rules sync) */
+/* Wanderlust Lash Bar — Punch Card v2.5 (appearance customization + branding sync + cute UI) */
 const $ = (s)=>document.querySelector(s);
 const $$ = (s)=>Array.from(document.querySelectorAll(s));
-const storeKey = 'punchcard:v2_4';
+const storeKey = 'punchcard:v2_5';
 
 function debounce(fn, delay=1500){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), delay); }; }
 
@@ -12,9 +12,16 @@ function save(){
   localStorage.setItem(storeKey, JSON.stringify(state));
   try {
     document.documentElement.style.setProperty('--brand', state.settings?.brandColor || '#ff6ea6');
+    document.documentElement.style.setProperty('--header-text', state.settings?.headerTextColor || '#111111');
+    document.documentElement.style.setProperty('--header-bg', state.settings?.headerBgColor || '#ffffff');
     $('#brandTitle').textContent = state.settings?.businessName || 'Wanderlust Lash Bar';
+    // logo
+    const logo = $('#headerLogo'); if (logo){ if (state.settings?.headerLogoData){ logo.src = state.settings.headerLogoData; } else { logo.src = 'logo-lash.svg'; } }
+    // background image
+    if (state.settings?.bgImageData){ document.body.style.backgroundImage = `url(${state.settings.bgImageData})`; } else { document.body.style.backgroundImage = ''; }
   } catch {}
   debouncedCloudBackup();
+  debouncedBrandingSync();
 }
 
 function uid(){ return Math.random().toString(36).slice(2, 10); }
@@ -25,7 +32,20 @@ function escapeHTML(s){ return (s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'
 
 function seed(){
   return {
-    settings:{ businessName:'Wanderlust Lash Bar', brandColor:'#ff6ea6', ownerKey: Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2), rewardsRules: [] },
+    settings:{
+      businessName:'Wanderlust Lash Bar',
+      brandColor:'#ff6ea6',
+      ownerKey: Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2),
+      rewardsRules: [],
+      headerTextColor:'#111111',
+      headerBgColor:'#ffffff',
+      headerLogoData:'',
+      bgImageData:'',
+      cardStyle:'classic',
+      showBadges:true,
+      showUpcoming:true,
+      shareTheme:'classic'
+    },
     clients:[], activity:[]
   };
 }
@@ -35,24 +55,46 @@ function render(){
   renderRules();
   if ($('#businessName')) $('#businessName').value = state.settings.businessName || '';
   if ($('#brandColor')) $('#brandColor').value = state.settings.brandColor || '#ff6ea6';
+  if ($('#headerTextColor')) $('#headerTextColor').value = state.settings.headerTextColor || '#111111';
+  if ($('#headerBgColor')) $('#headerBgColor').value = state.settings.headerBgColor || '#ffffff';
+  if ($('#cardStyle')) $('#cardStyle').value = state.settings.cardStyle || 'classic';
+  if ($('#shareTheme')) $('#shareTheme').value = state.settings.shareTheme || 'classic';
+  if ($('#showBadges')) $('#showBadges').checked = !!state.settings.showBadges;
+  if ($('#showUpcoming')) $('#showUpcoming').checked = !!state.settings.showUpcoming;
 }
 
 // ---- Rewards helpers ----
 function nextRewardHintFor(client){
   const rules = (state.settings.rewardsRules||[]).slice().sort((a,b)=>a.punches-b.punches);
   const current = client.punches||0;
-  // find first rule with punches > current
   const upcoming = rules.find(r => r.punches > current);
   if (upcoming){
     const remaining = upcoming.punches - current;
     return `${remaining} more ${remaining===1?'punch':'punches'} until ${upcoming.label}`;
   }
-  // otherwise, show highest achieved rule
   const achieved = rules.filter(r => r.punches <= current).sort((a,b)=>b.punches-a.punches)[0];
   if (achieved){
     return `Eligible: ${achieved.label}`;
   }
   return '';
+}
+function upcomingListFor(client){
+  if (!state.settings.showUpcoming) return '';
+  const rules = (state.settings.rewardsRules||[]).slice().sort((a,b)=>a.punches-b.punches);
+  const current = client.punches||0;
+  const ups = rules.filter(r=>r.punches>current);
+  if (!ups.length) return '';
+  return 'Next: ' + ups.slice(0,3).map(r=>{
+    const remaining = r.punches - current;
+    return `${remaining}→${r.label}`;
+  }).join('; ');
+}
+function achievedBadgeFor(client){
+  if (!state.settings.showBadges) return '';
+  const rules = (state.settings.rewardsRules||[]).slice().sort((a,b)=>b.punches-a.punches);
+  const current = client.punches||0;
+  const achieved = rules.find(r => r.punches <= current);
+  return achieved ? `Eligible: ${achieved.label}` : '';
 }
 
 // ---- Clients (clean list) ----
@@ -67,10 +109,14 @@ function renderClients(query){
   for (const c of items){
     const pct = c.goal ? Math.min(100, Math.round((c.punches / c.goal) * 100)) : 0;
     const card = document.createElement('div');
-    card.className = 'card';
+    const style = state.settings.cardStyle || 'classic';
+    card.className = 'card ' + (style!=='classic'?style:'');
     card.dataset.id = c.id;
     const hint = nextRewardHintFor(c);
+    const upcoming = upcomingListFor(c);
+    const badge = achievedBadgeFor(c);
     card.innerHTML = `
+      ${badge ? `<span class="elig">${escapeHTML(badge)}</span>` : ''}
       <div class="row" style="justify-content:space-between;gap:8px;">
         <h3>${escapeHTML(c.name)}</h3>
         <span class="badge">${c.punches}/${c.goal}</span>
@@ -78,6 +124,7 @@ function renderClients(query){
       <div class="muted">${c.phone ? escapeHTML(c.phone)+' · ' : ''}${c.totalRewards||0} rewards</div>
       <div class="progress" aria-label="Progress"><div style="width:${pct}%"></div></div>
       ${hint ? `<div class="muted" style="margin-top:4px">${escapeHTML(hint)}</div>` : ''}
+      ${upcoming ? `<div class="muted" style="margin-top:2px">${escapeHTML(upcoming)}</div>` : ''}
     `;
     wrap.appendChild(card);
   }
@@ -93,8 +140,8 @@ function openDetail(id){
   const pct = c.goal ? Math.min(100, Math.round((c.punches / c.goal) * 100)) : 0;
   $('#detailProgress').style.width = pct + '%';
   $('#detailRedeemBtn').disabled = !(c.punches >= c.goal);
-  const hint = nextRewardHintFor(c);
-  $('#detailHint').textContent = hint || '';
+  $('#detailHint').textContent = nextRewardHintFor(c) || '';
+  $('#detailUpcoming').textContent = upcomingListFor(c) || '';
   const feed = $('#detailHistory'); feed.innerHTML = '';
   for (const h of c.history.slice(0,50)){
     const row = document.createElement('div'); row.className='feed-item';
@@ -136,6 +183,24 @@ function renderRules(){
   }
 }
 
+// ---- Image helpers (compress to fit localStorage) ----
+async function fileToDataURLCompressed(file, maxW=1600, quality=0.8){
+  const img = new Image();
+  const reader = new FileReader();
+  const data = await new Promise((resolve,reject)=>{ reader.onload = ()=>resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
+  return await new Promise((resolve)=>{
+    img.onload = ()=>{
+      const scale = Math.min(1, maxW / img.width);
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = data;
+  });
+}
+
 // ---- Data ops ----
 function newClientPayload({name, phone='', goal=10}){
   return { id: uid(), name: name.trim(), phone: phone.trim(), goal: Math.max(1, Number(goal)||10), punches:0, totalRewards:0, lastVisit:nowISO(), public_slug: slug(), history:[{type:'create', amount:0, at: nowISO()}] };
@@ -157,7 +222,7 @@ function openShareForClient(id){
 }
 function makePublicLink(c){ const u = new URL('share.html', location.href); u.searchParams.set('c', c.public_slug); return u.toString(); }
 
-// ---- Tabs (main + subtabs) ----
+// ---- Tabs ----
 function activateTab(name){
   $$('.tab').forEach(b=>{ const on = b.dataset.tab===name; b.classList.toggle('active', on); b.setAttribute('aria-selected', String(on)); });
   $$('.tab-panel').forEach(p=>p.classList.remove('active'));
@@ -175,7 +240,7 @@ async function sha256(str){ const buf = await crypto.subtle.digest('SHA-256', ne
 async function setPin(raw){ if (!raw){ delete state.settings.pinHash; save(); return; } state.settings.pinHash = await sha256(raw); save(); }
 async function verifyPin(raw){ if (!hasPin()) return true; return (await sha256(raw)) === state.settings.pinHash; }
 function lockUI(isLocked){ document.body.dataset.locked = isLocked ? '1':'0'; /* could implement modal */ }
-const clientModal = $('#clientModal'); const clientForm = $('#clientForm');
+const clientModal = $('#clientModal');
 const detailModal = $('#detailModal');
 
 function openClientModal(existing=null){
@@ -206,7 +271,7 @@ async function supabaseDeleteClient(c){
 function syncClient(c){ return supabaseUpsertClient(c); }
 function deleteRemoteClient(c){ return supabaseDeleteClient(c); }
 
-// Rules sync
+// Rules
 async function supabaseUpsertRule(r){
   if (!window.PUNCH_CONFIG?.SUPABASE_URL) return;
   const url = `${window.PUNCH_CONFIG.SUPABASE_URL}/rest/v1/rules`;
@@ -228,6 +293,29 @@ async function loadRulesFromCloud(){
   const rows = await res.json();
   if (Array.isArray(rows)){ state.settings.rewardsRules = rows; save(); renderRules(); renderClients($('#searchInput')?.value||''); }
 }
+
+// Branding sync (only appearance fields)
+async function supabaseUpsertBranding(){
+  if (!window.PUNCH_CONFIG?.SUPABASE_URL) return;
+  const url = `${window.PUNCH_CONFIG.SUPABASE_URL}/rest/v1/branding`;
+  const b = {
+    owner_key: state.settings.ownerKey,
+    business_name: state.settings.businessName,
+    brand_color: state.settings.brandColor,
+    header_text_color: state.settings.headerTextColor,
+    header_bg_color: state.settings.headerBgColor,
+    share_theme: state.settings.shareTheme,
+    card_style: state.settings.cardStyle,
+    show_badges: !!state.settings.showBadges,
+    show_upcoming: !!state.settings.showUpcoming,
+    header_logo_data: state.settings.headerLogoData || null,
+    bg_image_data: state.settings.bgImageData || null,
+    updated_at: new Date().toISOString()
+  };
+  const res = await fetch(url, { method:'POST', headers: headers(), body: JSON.stringify([b]) });
+  if (!res.ok) console.warn('Branding upsert failed', await res.text());
+}
+const debouncedBrandingSync = debounce(supabaseUpsertBranding, 1200);
 
 // ---- Supabase: full-state backup ----
 const setCloudStatus = (cls, emoji)=>{ const el=$('#cloudStatus'); if(!el) return; el.className='cloud-status '+cls; el.textContent=emoji; };
@@ -291,9 +379,34 @@ window.addEventListener('DOMContentLoaded', ()=>{
     const del = e.target.closest('[data-rule-del]'); if (del){ deleteRule(del.getAttribute('data-rule-del')); }
   });
 
-  // Settings
+  // Business + Appearance
   $('#businessName')?.addEventListener('change', e=>{ state.settings.businessName = e.target.value.trim() || 'Wanderlust Lash Bar'; save(); render(); });
   $('#brandColor')?.addEventListener('input', e=>{ state.settings.brandColor = e.target.value || '#ff6ea6'; save(); render(); });
+  $('#headerTextColor')?.addEventListener('input', e=>{ state.settings.headerTextColor = e.target.value || '#111111'; save(); render(); });
+  $('#headerBgColor')?.addEventListener('input', e=>{ state.settings.headerBgColor = e.target.value || '#ffffff'; save(); render(); });
+  $('#cardStyle')?.addEventListener('change', e=>{ state.settings.cardStyle = e.target.value; save(); render(); });
+  $('#shareTheme')?.addEventListener('change', e=>{ state.settings.shareTheme = e.target.value; save(); });
+  $('#showBadges')?.addEventListener('change', e=>{ state.settings.showBadges = !!e.target.checked; save(); render(); });
+  $('#showUpcoming')?.addEventListener('change', e=>{ state.settings.showUpcoming = !!e.target.checked; save(); render(); });
+
+  // Logo + background uploads
+  $('#headerLogoInput')?.addEventListener('change', async e=>{
+    const file = e.target.files?.[0]; if(!file) return;
+    const data = await fileToDataURLCompressed(file, 512, 0.9);
+    state.settings.headerLogoData = data;
+    save(); render();
+    alert('Header logo updated!');
+  });
+  $('#bgImageInput')?.addEventListener('change', async e=>{
+    const file = e.target.files?.[0]; if(!file) return;
+    const data = await fileToDataURLCompressed(file, 1600, 0.8);
+    state.settings.bgImageData = data;
+    save(); render();
+    alert('Background image set!');
+  });
+  $('#removeBgBtn')?.addEventListener('click', ()=>{ state.settings.bgImageData=''; save(); render(); });
+
+  // Security
   $('#pinInput')?.addEventListener('change', async e=>{ const raw=e.target.value.trim(); if(raw && (raw.length<4 || raw.length>8 || !/^[0-9]+$/.test(raw))){ alert('PIN must be 4–8 digits.'); e.target.value=''; return; } await setPin(raw); e.target.value=''; alert(raw ? 'PIN set.' : 'PIN removed.'); });
 
   // Cloud buttons
@@ -315,10 +428,9 @@ window.addEventListener('DOMContentLoaded', ()=>{
 
   if ('serviceWorker' in navigator){ navigator.serviceWorker.register('service-worker.js').catch(console.error); }
 
-  // Initial render + try loading rules from cloud
   save(); render();
   loadRulesFromCloud().catch(()=>{});
 });
 
-// Expose for console
+// Expose
 window.__punch = { state: ()=>state, backupToCloud, restoreFromCloud };
