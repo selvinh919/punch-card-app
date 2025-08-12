@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -23,6 +23,7 @@
     <div class="muted" id="updated"></div>
     <div class="bar"><div id="prog" style="width:0%"></div></div>
     <div><span class="badge" id="counts">0/0 punches</span></div>
+    <div class="muted" id="hint" style="margin-top:6px"></div>
     <footer>This page updates whenever your stylist records a visit.</footer>
   </div>
 
@@ -31,19 +32,43 @@
     (async function(){
       const params = new URLSearchParams(location.search);
       const slug = params.get('c');
-      if (!slug){ document.getElementById('card').innerHTML = '<p>Missing link.</p>'; return; }
-      if (!window.PUNCH_CONFIG?.SUPABASE_URL){ document.getElementById('card').innerHTML = '<p>Not configured.</p>'; return; }
-      const url = window.PUNCH_CONFIG.SUPABASE_URL + '/rest/v1/clients?select=name,goal,punches,total_rewards,last_visit&public_slug=eq.' + encodeURIComponent(slug);
-      const res = await fetch(url, { headers: { apikey: window.PUNCH_CONFIG.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + window.PUNCH_CONFIG.SUPABASE_ANON_KEY } });
-      if (!res.ok){ document.getElementById('card').innerHTML = '<p>Could not load.</p>'; return; }
-      const rows = await res.json();
-      if (!rows.length){ document.getElementById('card').innerHTML = '<p>Link not found.</p>'; return; }
+      const card = document.getElementById('card');
+      if (!slug){ card.innerHTML = '<p>Missing link.</p>'; return; }
+      if (!window.PUNCH_CONFIG?.SUPABASE_URL){ card.innerHTML = '<p>Not configured.</p>'; return; }
+
+      const headers = { apikey: window.PUNCH_CONFIG.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + window.PUNCH_CONFIG.SUPABASE_ANON_KEY };
+
+      // 1) Load client (including owner_key)
+      const urlClient = window.PUNCH_CONFIG.SUPABASE_URL + '/rest/v1/clients?select=name,goal,punches,total_rewards,last_visit,owner_key&public_slug=eq.' + encodeURIComponent(slug);
+      const resC = await fetch(urlClient, { headers }); if (!resC.ok){ card.innerHTML = '<p>Could not load.</p>'; return; }
+      const rows = await resC.json(); if (!rows.length){ card.innerHTML = '<p>Link not found.</p>'; return; }
       const c = rows[0];
+
+      // 2) Load rules for this owner
+      let rules = [];
+      try{
+        const urlRules = window.PUNCH_CONFIG.SUPABASE_URL + '/rest/v1/rules?select=punches,label&owner_key=eq.' + encodeURIComponent(c.owner_key) + '&order=punches.asc';
+        const resR = await fetch(urlRules, { headers });
+        if (resR.ok) rules = await resR.json();
+      }catch{}
+
+      // 3) Render UI + hint
       document.getElementById('name').textContent = c.name;
       const pct = c.goal ? Math.min(100, Math.round((c.punches / c.goal)*100)) : 0;
       document.getElementById('prog').style.width = pct + '%';
       document.getElementById('counts').textContent = (c.punches||0) + '/' + (c.goal||0) + ' punches';
       document.getElementById('updated').textContent = 'Updated ' + new Date(c.last_visit||Date.now()).toLocaleString();
+
+      const next = rules.find(r => r.punches > (c.punches||0));
+      let hint = '';
+      if (next){
+        const rem = next.punches - (c.punches||0);
+        hint = rem + ' more ' + (rem===1?'punch':'punches') + ' until ' + next.label;
+      } else {
+        const achieved = rules.filter(r=> r.punches <= (c.punches||0)).sort((a,b)=>b.punches-a.punches)[0];
+        if (achieved) hint = 'Eligible: ' + achieved.label;
+      }
+      document.getElementById('hint').textContent = hint;
     })();
   </script>
 </body>

@@ -17,6 +17,7 @@
       <h1 id="brandTitle">Wanderlust Lash Bar</h1>
     </div>
     <div class="right-tools">
+      <button id="cloudNowBtn" class="icon-btn" title="Force Cloud Backup" aria-label="Force Cloud Backup">☁️</button>
       <span id="cloudStatus" class="cloud-status" title="Cloud backup status">⏳</span>
       <button id="lockBtn" class="icon-btn" title="Lock/Unlock" aria-label="Lock/Unlock">🔒</button>
     </div>
@@ -35,60 +36,94 @@
         <input id="searchInput" class="search" type="search" placeholder="Search clients..." />
         <button id="addClientBtn" class="btn primary">+ New</button>
       </div>
-      <div id="clientsList" class="cards" tabindex="-1"></div>
+      <div id="clientsList" class="cards clean" tabindex="-1"></div>
     </section>
 
-    <!-- REWARDS -->
+    <!-- REWARDS (Rules) -->
     <section id="tab-rewards" class="tab-panel" role="tabpanel" aria-labelledby="Rewards">
       <div class="info">
-        <h2>Recent Activity</h2>
-        <p>Last 20 punches or redemptions.</p>
+        <h2>Reward Rules</h2>
+        <p>Create discounts or perks that unlock after a certain number of punches.</p>
       </div>
-      <div id="activityFeed" class="feed"></div>
+      <form id="rewardsForm" class="rewards-form">
+        <div class="row">
+          <label class="inline">
+            Punches
+            <input type="number" id="rulePunches" min="1" value="3" />
+          </label>
+          <label class="inline">
+            Reward Label (e.g., 15% off, free fill)
+            <input type="text" id="ruleLabel" placeholder="15% off" />
+          </label>
+          <button type="button" id="addRuleBtn" class="btn primary">Add Rule</button>
+        </div>
+        <small>Rules are global and can be combined with per-client goals if you want.</small>
+      </form>
+      <div id="rulesList" class="rules"></div>
     </section>
 
-    <!-- SETTINGS -->
+    <!-- SETTINGS (subtabs) -->
     <section id="tab-settings" class="tab-panel" role="tabpanel" aria-labelledby="Settings">
-      <form id="settingsForm" class="settings-form">
-        <h2>Business</h2>
-        <label>
-          Business Name
-          <input type="text" id="businessName" placeholder="Wanderlust Lash Bar" />
-        </label>
-        <label>
-          Brand Color
-          <input type="color" id="brandColor" value="#ff6ea6" />
-        </label>
+      <nav class="subtabs" role="tablist" aria-label="Settings Sections">
+        <button class="subtab active" data-subtab="business" aria-selected="true">Business</button>
+        <button class="subtab" data-subtab="security" aria-selected="false">Security</button>
+        <button class="subtab" data-subtab="cloud" aria-selected="false">Cloud</button>
+        <button class="subtab" data-subtab="data" aria-selected="false">Data</button>
+      </nav>
 
-        <h2>Security</h2>
-        <label>
-          App PIN (optional)
-          <input type="password" id="pinInput" inputmode="numeric" pattern="[0-9]*" placeholder="4–8 digits" />
-        </label>
-        <small>Set a PIN to lock the app on this device.</small>
-
-        <h2>Cloud Backup</h2>
-        <div class="row">
-          <button type="button" id="backupCloudBtn" class="btn">Force Cloud Backup</button>
-          <button type="button" id="restoreCloudBtn" class="btn">Restore from Cloud</button>
-        </div>
-        <small>Backups save your full data (clients, activity, settings) to Supabase so you can recover on a new phone.</small>
-
-        <h2>Data</h2>
-        <div class="row">
-          <button type="button" id="backupBtn" class="btn">Export Backup (file)</button>
-          <label class="file-btn">
-            <input type="file" id="restoreFile" accept=".json" hidden />
-            <span class="btn">Import Backup (file)</span>
+      <div id="sub-business" class="subpanel active">
+        <form class="settings-form">
+          <h2>Business</h2>
+          <label>
+            Business Name
+            <input type="text" id="businessName" placeholder="Wanderlust Lash Bar" />
           </label>
-        </div>
-        <small>Your data is also stored locally on this device. Export regularly if you want your own copy.</small>
+          <label>
+            Brand Color
+            <input type="color" id="brandColor" value="#ff6ea6" />
+          </label>
+        </form>
+      </div>
 
-        <div class="row" style="margin-top:1rem;">
-          <button type="button" id="demoBtn" class="btn ghost">Load Demo Data</button>
-          <button type="button" id="resetBtn" class="btn danger">Erase All Data</button>
-        </div>
-      </form>
+      <div id="sub-security" class="subpanel">
+        <form class="settings-form">
+          <h2>Security</h2>
+          <label>
+            App PIN (optional)
+            <input type="password" id="pinInput" inputmode="numeric" pattern="[0-9]*" placeholder="4–8 digits" />
+          </label>
+          <small>Set a PIN to lock the app on this device.</small>
+        </form>
+      </div>
+
+      <div id="sub-cloud" class="subpanel">
+        <form class="settings-form">
+          <h2>Cloud Backup</h2>
+          <div class="row">
+            <button type="button" id="backupCloudBtn" class="btn">Force Cloud Backup</button>
+            <button type="button" id="restoreCloudBtn" class="btn">Restore from Cloud</button>
+          </div>
+          <small>Automatic cloud backup runs after changes. Use these if you want to force it or restore on a new device.</small>
+        </form>
+      </div>
+
+      <div id="sub-data" class="subpanel">
+        <form class="settings-form">
+          <h2>Data</h2>
+          <div class="row">
+            <button type="button" id="backupBtn" class="btn">Export Backup (file)</button>
+            <label class="file-btn">
+              <input type="file" id="restoreFile" accept=".json" hidden />
+              <span class="btn">Import Backup (file)</span>
+            </label>
+          </div>
+          <small>Your data is also stored locally on this device.</small>
+          <div class="row" style="margin-top:1rem;">
+            <button type="button" id="resetBtn" class="btn danger">Erase All Data</button>
+          </div>
+        </form>
+      </div>
+
       <footer class="credits">
         <span>Made for your loyalty program ❤️</span>
       </footer>
@@ -119,6 +154,26 @@
         <button id="saveClientBtn" value="default" class="btn primary">Save</button>
       </menu>
     </form>
+  </dialog>
+
+  <!-- Client Detail Modal (history + actions + reward hint) -->
+  <dialog id="detailModal" class="modal">
+    <div class="modal-card">
+      <h3 id="detailTitle">Client</h3>
+      <div id="detailInfo" class="muted"></div>
+      <div class="progress"><div id="detailProgress" style="width:0%"></div></div>
+      <div id="detailHint" class="muted" style="margin:6px 0 0"></div>
+      <div class="row" style="margin:8px 0">
+        <button class="btn primary" id="detailPunchBtn">Punch +1</button>
+        <button class="btn" id="detailRedeemBtn" disabled>Redeem</button>
+        <button class="btn" id="detailShareBtn">Share</button>
+        <button class="btn ghost" id="detailEditBtn">Edit</button>
+      </div>
+      <div id="detailHistory" class="feed" style="max-height:40vh;overflow:auto;"></div>
+      <div class="modal-actions">
+        <button class="btn" id="detailCloseBtn">Close</button>
+      </div>
+    </div>
   </dialog>
 
   <!-- Share Modal -->

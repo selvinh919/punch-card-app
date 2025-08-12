@@ -27,25 +27,32 @@ body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,Se
 .app-bar h1{margin:0;font-size:20px;letter-spacing:.2px;color:#111111}
 .icon-btn{background:none;border:0;color:#111111;font-size:20px;cursor:pointer;opacity:.85}
 .icon-btn:hover{opacity:1}
-.cloud-status{font-size:18px;margin-right:10px;opacity:.7}
+.cloud-status{font-size:18px;margin-right:8px;opacity:.7}
 .cloud-ok{color:#16a34a} .cloud-warn{color:#d97706} .cloud-bad{color:#ef4444}
 
 .tabs{display:flex;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:56px;z-index:19}
 .tab{border:1px solid var(--border);background:#f9fafb;color:#111827;padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap}
 .tab.active{background:var(--brand);color:white;border-color:transparent}
 
+.subtabs{display:flex;gap:8px;padding:8px 0;margin:4px 0 12px}
+.subtab{border:1px solid var(--border);background:#fff;border-radius:999px;padding:6px 12px;cursor:pointer}
+.subtab.active{background:var(--brand);color:#fff;border-color:transparent}
+.subpanel{display:none}
+.subpanel.active{display:block}
+
 main{padding:12px 14px 80px;max-width:1100px;margin:0 auto}
 
 .toolbar{display:flex;gap:10px;align-items:center;padding:6px 0}
-.search{flex:1;border:1px solid var(--border);background:#fff;color:var(--text);border-radius:12px;padding:12px 14px}
+.search{flex:1;border:1px solid var(--border);background:#fff;color:#111111;border-radius:12px;padding:12px 14px}
 .btn{border:1px solid var(--border);background:#fff;color:#111827;border-radius:12px;padding:10px 14px;cursor:pointer}
 .btn:hover{filter:brightness(1.03)}
 .btn.primary{background:var(--brand);border-color:transparent;color:white}
 .btn.danger{background:var(--danger);border-color:transparent;color:white}
 .btn.ghost{background:#fff;border-color:var(--border);color:#111827}
 
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:10px}
-.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;border:1px solid var(--border)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:10px}
+.cards.clean .card .actions{display:none}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;border:1px solid var(--border);cursor:pointer}
 .card h3{margin:0 0 4px 0}
 .muted{color:var(--muted);font-size:.92rem}
 
@@ -63,8 +70,12 @@ main{padding:12px 14px 80px;max-width:1100px;margin:0 auto}
 
 .settings-form{display:grid;gap:14px;max-width:720px}
 .settings-form label{display:grid;gap:6px}
-.settings-form input[type="text"], .settings-form input[type="tel"], .settings-form input[type="number"], .settings-form input[type="password"]{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:12px;padding:12px 14px}
+.settings-form input[type="text"], .settings-form input[type="tel"], .settings-form input[type="number"], .settings-form input[type="password"]{border:1px solid var(--border);background:#fff;color:#111111;border-radius:12px;padding:12px 14px}
 .file-btn .btn{display:inline-flex;align-items:center}
+
+.rules{display:grid;gap:10px;margin-top:12px}
+.rule{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px}
+.rule small{color:#6b7280}
 
 .fab{position:fixed;right:18px;bottom:18px;width:60px;height:60px;border-radius:50%;border:0;background:var(--brand);color:white;font-size:32px;box-shadow:var(--shadow);cursor:pointer;display:grid;place-items:center}
 .fab:active{transform:translateY(1px)}
