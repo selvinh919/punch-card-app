@@ -1,0 +1,32 @@
+<!doctype html><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>Wanderlust Debug</title>
+<style>body{font:16px/1.4 system-ui;padding:16px} pre{background:#f9fafb;border:1px solid #e5e7eb;padding:10px;border-radius:12px;overflow:auto}</style>
+<button id="hard" style="padding:8px 12px;border-radius:8px;border:1px solid #e5e7eb">Hard Refresh This Site</button>
+<pre id="out">Running tests…</pre>
+<script src="config.js"></script>
+<script>
+async function hardRefresh(){
+  try{
+    if('serviceWorker' in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r=>r.unregister().catch(()=>{})));
+      const keys=await caches.keys();
+      await Promise.all(keys.map(k=>caches.delete(k).catch(()=>{})));
+    }
+  }catch{}
+  const u=new URL(location.href); u.searchParams.set('v', Date.now()); location.href = u.toString();
+}
+document.getElementById('hard').onclick = hardRefresh;
+(async()=>{
+  const out=document.getElementById('out'); const log=(...a)=>out.textContent+='\n'+a.join(' ');
+  try{
+    if(!window.PUNCH_CONFIG){ log('❌ config.js not loaded'); return; }
+    log('✅ config.js present');
+    const url=window.PUNCH_CONFIG.SUPABASE_URL, key=window.PUNCH_CONFIG.SUPABASE_ANON_KEY;
+    if(!url){ log('❌ SUPABASE_URL missing'); return; } else log('URL:',url);
+    if(!key){ log('❌ SUPABASE_ANON_KEY missing'); return; } else log('Key present');
+    const r=await fetch(url+'/rest/v1/clients?select=id&limit=1',{headers:{apikey:key,Authorization:'Bearer '+key}});
+    log('HTTP', r.status); log('OK if 200/206.');
+  }catch(e){ log('Error:', e.message||e); }
+})();
+</script>

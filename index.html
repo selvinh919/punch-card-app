@@ -16,7 +16,6 @@
       <img src="logo-lash.svg" alt="Lash logo" class="lash-logo" id="headerLogo" />
       <h1 id="brandTitle">Wanderlust Lash Bar</h1>
     </div>
-    
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Main Navigation">
@@ -26,8 +25,7 @@
   </nav>
 
   <main>
-    <!-- CLIENTS -->
-    <section id="tab-clients" class="tab-panel active" role="tabpanel" aria-labelledby="Clients">
+    <section id="tab-clients" class="tab-panel active" role="tabpanel">
       <div class="toolbar">
         <input id="searchInput" class="search" type="search" placeholder="Search clients..." />
         <button id="addClientBtn" class="btn primary">+ New</button>
@@ -35,99 +33,38 @@
       <div id="clientsList" class="cards clean" tabindex="-1"></div>
     </section>
 
-    <!-- REWARDS (Rules) -->
-    <section id="tab-rewards" class="tab-panel" role="tabpanel" aria-labelledby="Rewards">
+    <section id="tab-rewards" class="tab-panel" role="tabpanel">
       <div class="info">
         <h2>Reward Rules</h2>
-        <p>Create discounts or perks that unlock after a certain number of punches.</p>
+        <p>Add perks that unlock after a number of punches (e.g., 3 → 15% off).</p>
       </div>
       <form id="rewardsForm" class="rewards-form">
         <div class="row">
-          <label class="inline">
-            Punches
+          <label class="inline">Punches
             <input type="number" id="rulePunches" min="1" value="3" />
           </label>
-          <label class="inline">
-            Reward Label (e.g., 15% off, free fill)
+          <label class="inline">Reward Label
             <input type="text" id="ruleLabel" placeholder="15% off" />
           </label>
           <button type="button" id="addRuleBtn" class="btn primary">Add Rule</button>
         </div>
-        <small>Rules are global. They appear in the app and on the client share page.</small>
       </form>
       <div id="rulesList" class="rules"></div>
     </section>
 
-    <!-- SETTINGS (subtabs) -->
-    <section id="tab-settings" class="tab-panel" role="tabpanel" aria-labelledby="Settings">
-      <nav class="subtabs" role="tablist" aria-label="Settings Sections">
-        <button class="subtab active" data-subtab="business" aria-selected="true">Business</button>
-        <button class="subtab" data-subtab="appearance" aria-selected="false">Appearance</button>
-        <button class="subtab" data-subtab="security" aria-selected="false">Security</button>
-        <button class="subtab" data-subtab="cloud" aria-selected="false">Cloud</button>
-        <button class="subtab" data-subtab="data" aria-selected="false">Data</button>
-      </nav>
-
-      <div id="sub-business" class="subpanel active">
-        <form class="settings-form">
-          <h2>Business</h2>
-          <label>
-            Business Name
+    <section id="tab-settings" class="tab-panel" role="tabpanel">
+      <div class="info">
+        <h2>Business</h2>
+        <div class="row">
+          <label class="inline">Business Name
             <input type="text" id="businessName" placeholder="Wanderlust Lash Bar" />
           </label>
-          <label>
-            Brand Color
+          <label class="inline">Brand Color
             <input type="color" id="brandColor" value="#ff6ea6" />
           </label>
-        </form>
-      </div>
-
-      <div id="sub-appearance" class="subpanel">
-        <form class="settings-form">
-          <h2>Appearance</h2>
-          <label>
-            Header Logo (square/transparent works best)
-            <input type="file" id="headerLogoInput" accept="image/*" />
-          </label>
-          <div class="row">
-            <label class="inline">
-              Header Text Color
-              <input type="color" id="headerTextColor" value="#111111" />
-            </label>
-            <label class="inline">
-              Header Background
-              <input type="color" id="headerBgColor" value="#ffffff" />
-            </label>
-          </div>
-
-          <label>
-            App Background Photo
-            <input type="file" id="bgImageInput" accept="image/*" />
-          </label>
-          <div class="row">
-            <button type="button" class="btn" id="removeBgBtn">Remove Background</button>
-          </div>
-
-          <h3>Card Style</h3>
-          <div class="row">
-            <select id="cardStyle">
-              <option value="classic">Classic</option>
-              <option value="softpink">Soft Pink</option>
-              <option value="glass">Glass</option>
-              <option value="cute">Cute</option>
-            </select>
-            <label class="inline">
-              <input type="checkbox" id="showBadges" checked />
-              Show eligible reward badge
-            </label>
-            <label class="inline">
-              <input type="checkbox" id="showUpcoming" checked />
-              Show all upcoming tiers
-            </label>
-          </div>
-
-          <h3>Theme (app + share link)</h3>
-          <div class="row">
+        </div>
+        <div class="row">
+          <label class="inline">Theme
             <select id="shareTheme">
               <option value="classic">Classic</option>
               <option value="girly">Girly</option>
@@ -135,87 +72,29 @@
               <option value="candy-pop">Candy Pop</option>
               <option value="luxe-mono">Luxe Mono</option>
             </select>
-            <select id="shareFont">
-              <option value="system-ui">System (default)</option>
-              <option value="Poppins">Poppins</option>
-              <option value="Quicksand">Quicksand</option>
-              <option value="Nunito">Nunito</option>
-              <option value="Playfair Display">Playfair Display</option>
-              <option value="Pacifico">Pacifico (script)</option>
-            </select>
-            <label class="inline">
-              <input type="checkbox" id="emojiHeadings" />
-              Cute emoji in headings 💖
-            </label>
-          </div>
-          <div class="row" style="margin-top:8px"><button type="button" id="syncBrandingNowBtn" class="btn">Sync Branding Now</button><button type="button" id="forceRefreshBtn" class="btn">Force App Refresh</button><button type="button" id="copyOwnerKeyBtn" class="btn ghost">Copy Owner Key</button></div><small>These settings sync to the public link so clients see your branding.</small>
-        </form>
-      </div>
-
-      <div id="sub-security" class="subpanel">
-        <form class="settings-form">
-          <h2>Security</h2>
-          <label>
-            App PIN (optional)
-            <input type="password" id="pinInput" inputmode="numeric" pattern="[0-9]*" placeholder="4–8 digits" />
           </label>
-          <small>Set a PIN to lock the app on this device.</small>
-        </form>
+          <label class="inline">Cute headings
+            <input type="checkbox" id="emojiHeadings" />
+          </label>
+        </div>
+        <div class="row">
+          <button id="copyOwnerKeyBtn" class="btn">Copy Owner Key</button>
+          <button id="forceRefreshBtn" class="btn">Force App Refresh</button>
+        </div>
+        <small>Branding + rules sync to the public share page.</small>
       </div>
-
-      <div id="sub-cloud" class="subpanel">
-        <form class="settings-form">
-          <h2>Cloud Backup</h2>
-          <div class="row">
-            <button type="button" id="backupCloudBtn" class="btn">Force Cloud Backup</button>
-            <button type="button" id="restoreCloudBtn" class="btn">Restore from Cloud</button>
-          </div>
-          <div class="row" style="margin-top:8px"><input type="text" id="ownerKeyInput" class="search" placeholder="Paste Owner Key to link this device"/><button type="button" id="linkOwnerKeyBtn" class="btn">Link Device</button><button type="button" id="syncAllNowBtn" class="btn">Sync All Now</button></div><small>Automatic cloud backup runs after changes. Linked devices will auto-refresh ~every 30s.</small>
-        </form>
-      </div>
-
-      <div id="sub-data" class="subpanel">
-        <form class="settings-form">
-          <h2>Data</h2>
-          <div class="row">
-            <button type="button" id="backupBtn" class="btn">Export Backup (file)</button>
-            <label class="file-btn">
-              <input type="file" id="restoreFile" accept=".json" hidden />
-              <span class="btn">Import Backup (file)</span>
-            </label>
-          </div>
-          <div class="row" style="margin-top:1rem;">
-            <button type="button" id="resetBtn" class="btn danger">Erase All Data</button>
-          </div>
-        </form>
-      </div>
-
-      <footer class="credits">
-        <span>Made for your loyalty program ❤️</span>
-      </footer>
     </section>
   </main>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <button id="fabAdd" class="fab" aria-label="Add client">＋</button>
 
-  <!-- Client Modal -->
   <dialog id="clientModal" class="modal">
     <form method="dialog" id="clientForm" class="modal-card">
       <h3 id="clientModalTitle">New Client</h3>
       <input type="hidden" id="clientId" />
-      <label>
-        Name
-        <input id="clientName" type="text" required placeholder="Client name" />
-      </label>
-      <label>
-        Phone (optional)
-        <input id="clientPhone" type="tel" placeholder="(555) 123-4567" />
-      </label>
-      <label>
-        Reward Goal (punches to redeem)
-        <input id="clientGoal" type="number" min="1" value="10" required />
-      </label>
+      <label>Name <input id="clientName" type="text" required placeholder="Client name" /></label>
+      <label>Phone (optional) <input id="clientPhone" type="tel" placeholder="(555) 123-4567" /></label>
+      <label>Reward Goal <input id="clientGoal" type="number" min="1" value="10" required /></label>
       <menu class="modal-actions">
         <button value="cancel" class="btn ghost">Cancel</button>
         <button id="saveClientBtn" value="default" class="btn primary">Save</button>
@@ -223,7 +102,6 @@
     </form>
   </dialog>
 
-  <!-- Client Detail Modal (history + actions + reward hint + upcoming list) -->
   <dialog id="detailModal" class="modal">
     <div class="modal-card">
       <h3 id="detailTitle">Client</h3>
@@ -239,6 +117,7 @@
       </div>
       <div id="detailHistory" class="feed" style="max-height:40vh;overflow:auto;"></div>
       <div class="modal-actions">
+        <button class="btn danger" id="detailDeleteBtn">Delete</button>
         <button class="btn" id="detailCloseBtn">Close</button>
       </div>
     </div>
@@ -247,18 +126,15 @@
   <dialog id="shareModal" class="modal">
     <div class="modal-card">
       <h3>Share Client Progress</h3>
-      <p class="muted">Send this link to your client or let them scan the QR code.</p>
       <input id="shareLinkInput" class="search" readonly />
       <div id="qrArea" style="display:grid;place-items:center;margin:12px 0;"></div>
       <div class="modal-actions">
         <button class="btn ghost" id="copyLinkBtn">Copy Link</button>
-        <button class="btn" id="shareNativeBtn">Share…</button>
         <button class="btn primary" id="closeShareBtn">Done</button>
       </div>
     </div>
   </dialog>
 
-  <!-- Redeem Picker -->
   <dialog id="redeemPicker" class="modal">
     <div class="modal-card">
       <h3>Choose a reward to redeem</h3>
@@ -268,6 +144,8 @@
       </div>
     </div>
   </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="qrcode.min.js" defer></script>
   <script src="config.js" defer></script>

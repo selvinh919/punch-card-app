@@ -1,7 +1,7 @@
 {
   "name": "Wanderlust Lash Bar \u2014 Punch Card",
   "short_name": "Wanderlust Punch",
-  "start_url": ".",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ff6ea6",
