@@ -214,14 +214,30 @@ function punch(id, amount=1){ const c = state.clients.find(x=>x.id===id); if (!c
 function redeem(id){ const c = state.clients.find(x=>x.id===id); if (!c) return; if (c.punches < c.goal) return; c.punches = 0; c.totalRewards = (c.totalRewards||0)+1; c.lastVisit = nowISO(); c.history.unshift({type:'redeem', amount:1, at: nowISO()}); state.activity.unshift({id: uid(), clientId: id, clientName: c.name, type:'redeem', amount:1, at: nowISO()}); save(); render(); syncClient(c).catch(console.warn); }
 
 // ---- Share / QR ----
+
 const shareModal = $('#shareModal'); let currentShareLink = '';
 function openShareForClient(id){
   const c = state.clients.find(x=>x.id===id); if (!c) return;
-  const link = makePublicLink(c); currentShareLink = link;
-  $('#shareLinkInput').value = link;
-  const qrArea = $('#qrArea'); qrArea.innerHTML=''; new QRCode(qrArea, { text: link, width:192, height:192 });
+  const baseLink = makePublicLink(c);
+  // keep permanent link stable
+  currentShareLink = baseLink;
+  const input = $('#shareLinkInput');
+  input.value = currentShareLink;
+
+  // Add preview cache-buster toggle if not present
+  let previewTgl = document.getElementById('previewBustToggle');
+  if (!previewTgl){
+    const wrap = document.createElement('label');
+    wrap.className = 'row';
+    wrap.style.margin = '6px 0 0';
+    wrap.innerHTML = '<input type="checkbox" id="previewBustToggle" /> Open fresh preview (bypass cache)';
+    input.parentElement.insertBefore(wrap, input.nextSibling);
+  }
+
+  const qrArea = $('#qrArea'); qrArea.innerHTML=''; new QRCode(qrArea, { text: currentShareLink, width:192, height:192 });
   shareModal.showModal();
 }
+
 function makePublicLink(c){ const u = new URL('share.html', location.href); u.searchParams.set('c', c.public_slug); return u.toString(); }
 
 // ---- Tabs ----
@@ -428,6 +444,45 @@ window.addEventListener('DOMContentLoaded', ()=>{
   $('#copyLinkBtn')?.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(currentShareLink); alert('Link copied!'); }catch{ alert('Copy failed. Long-press to copy.'); } });
   $('#shareNativeBtn')?.addEventListener('click', async ()=>{ if(navigator.share){ try{ await navigator.share({ title:'Reward progress', url: currentShareLink }); }catch{} } else { alert('Sharing not supported. Link is copied above.'); }});
   $('#closeShareBtn')?.addEventListener('click', ()=> $('#shareModal').close());
+  // Share preview cache-buster
+  document.body.addEventListener('change', (e)=>{
+    if (e.target && e.target.id === 'previewBustToggle'){
+      const busted = e.target.checked;
+      const url = new URL(currentShareLink);
+      if (busted){ url.searchParams.set('v', Date.now()); } else { url.searchParams.delete('v'); }
+      currentShareLink = url.toString();
+      $('#shareLinkInput').value = currentShareLink;
+      const qrArea = $('#qrArea'); qrArea.innerHTML=''; new QRCode(qrArea, { text: currentShareLink, width:192, height:192 });
+    }
+  });
+
+  // Force App Refresh button
+  $('#forceRefreshBtn')?.addEventListener('click', async ()=>{
+    try{
+      if ('serviceWorker' in navigator){
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r=>r.update().catch(()=>{})));
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k=>caches.delete(k).catch(()=>{})));
+      }
+    }catch{}
+    const u = new URL(location.href);
+    u.searchParams.set('v', Date.now());
+    location.href = u.toString();
+  });
+
+  // Sync Branding Now
+  $('#syncBrandingNowBtn')?.addEventListener('click', async ()=>{
+    try{ await supabaseUpsertBranding(); alert('Branding synced to cloud!'); }
+    catch(e){ alert('Branding sync failed. Check config.js.'); }
+  });
+
+  // Copy Owner Key
+  $('#copyOwnerKeyBtn')?.addEventListener('click', async ()=>{
+    try{ await navigator.clipboard.writeText(state.settings.ownerKey); alert('Owner Key copied!'); }
+    catch{ alert('Could not copy. Long-press to copy: ' + state.settings.ownerKey); }
+  });
+
 
   // Lock
   $('#lockBtn')?.addEventListener('click', ()=>{ if(!hasPin()) return alert('No PIN set. You can set one in Settings → Security.'); lockUI(true); });
