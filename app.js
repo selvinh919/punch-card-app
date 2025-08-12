@@ -1,4 +1,3 @@
-<script>
 /* Wanderlust Lash Bar v3.3 — bug fixes + full appearance */
 const $ = s=>document.querySelector(s);
 const $$ = s=>Array.from(document.querySelectorAll(s));
@@ -177,4 +176,3 @@ function render(){ renderClients($('#searchInput')?.value||''); }
 function addRule(punches,label){ const r={id:uid(),owner_key:state.settings.ownerKey,punches:Math.max(1,Number(punches)||1),label:String(label||'Reward')}; (state.settings.rewardsRules||=[]).push(r); save(); renderRules(); supabaseUpsertRule(r).catch(console.warn); }
 function deleteRule(id){ state.settings.rewardsRules=(state.settings.rewardsRules||[]).filter(x=>x.id!==id); save(); renderRules(); supabaseDeleteRule(id).catch(console.warn); }
 function renderRules(){ const box=$('#rulesList'); box.innerHTML=''; const list=(state.settings.rewardsRules||[]).slice().sort((a,b)=>a.punches-b.punches); if(!list.length){ box.innerHTML='<div class="info">No rules yet. Add one above.</div>'; return;} for(const r of list){ const el=document.createElement('div'); el.className='rule'; el.innerHTML=`<div><strong>${r.punches} punches</strong> → ${escapeHTML(r.label)}</div><div class="row"><button class="btn" data-rule-del="${r.id}">Delete</button></div>`; box.appendChild(el);} document.body.addEventListener('click',e=>{ const del=e.target.closest('[data-rule-del]'); if(del){ deleteRule(del.getAttribute('data-rule-del')); }}); }
-</script>
