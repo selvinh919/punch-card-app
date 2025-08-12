@@ -1,4 +1,4 @@
-/* Wanderlust Lash Bar v3.3 — bug fixes + full appearance */
+/* Wanderlust Lash Bar v3.5 — bug fixes + full appearance */
 const $ = s=>document.querySelector(s);
 const $$ = s=>Array.from(document.querySelectorAll(s));
 const storeKey='punchcard'; // stable so themes persist
@@ -113,7 +113,7 @@ function renderClients(q){const wrap=$('#clientsList'); wrap.innerHTML=''; const
 let currentDetailId=null;
 function openDetail(id){const c=state.clients.find(x=>x.id===id); if(!c) return; currentDetailId=id; $('#detailTitle').textContent=(state.settings.emojiHeadings?'💖 ':'')+c.name; $('#detailInfo').textContent=`${c.phone?c.phone+' · ':''}${c.punches}/${c.goal} punches`; $('#detailProgress').style.width=(c.goal?Math.min(100,Math.round(100*c.punches/c.goal)):0)+'%'; $('#detailHint').textContent=nextRewardHintFor(c)||''; $('#detailUpcoming').textContent=upcomingListFor(c)||''; const lbl=topEligibleLabel(c); $('#detailRedeemBtn').textContent=lbl?('Redeem '+lbl):'Redeem'; $('#detailRedeemBtn').disabled=!lbl; const feed=$('#detailHistory'); feed.innerHTML=''; for(const h of c.history.slice(0,50)){const row=document.createElement('div'); row.className='feed-item'; const verb=h.type==='punch'?'Punched':h.type==='redeem'?`Redeemed${h.label?' ('+escapeHTML(h.label)+')':''}`:h.type; row.innerHTML=`<div>${verb}</div><small>${fmtDate(h.at)}</small>`; feed.appendChild(row);} $('#detailModal').showModal();}
 
-function openClientModal(c=null){ $('#clientModalTitle').textContent = c?'Edit Client':'New Client'; $('#clientId').value=c?c.id:''; $('#clientName').value=c?c.name:''; $('#clientPhone').value=c?c.phone||'':''; $('#clientGoal').value=c?c.goal:10; $('#clientModal').showModal(); }
+function openClientModal(c=null){ $('#clientModalTitle').textContent = c?'Edit Client':'New Client'; $('#clientId').value=c?c.id:''; $('#clientName').value=c?c.name:''; $('#clientPhone').value=c?c.phone||''; $('#clientGoal').value=c?c.goal:10; $('#clientModal').showModal(); }
 
 function openRedeemPicker(id){ const c=state.clients.find(x=>x.id===id); if(!c){alert('Client not found');return;} const list=eligibleRewardsFor(c); if(!list.length){alert('No rewards eligible yet.');return;} if(list.length===1){redeem(id,list[0].rule.id);return;} const box=$('#redeemOptions'); box.innerHTML=''; for(const it of list){const b=document.createElement('button'); b.className='btn primary'; b.textContent=`${it.rule.label} (${it.available} available)`; b.setAttribute('data-redeem-rule',it.rule.id); b.style.display='block'; b.style.width='100%'; b.style.margin='6px 0'; box.appendChild(b);} $('#redeemPicker').dataset.clientId=id; $('#redeemPicker').showModal(); }
 
@@ -166,6 +166,15 @@ window.addEventListener('DOMContentLoaded', ()=>{ try{
   $('#copyOwnerKeyBtn')?.addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText(state.settings.ownerKey); toast('Owner key copied'); }catch{ alert('Copy failed'); } });
   $('#forceRefreshBtn')?.addEventListener('click',hardRefresh);
 
+  // Reward rules
+  document.getElementById('addRuleBtn')?.addEventListener('click',()=>{
+    const punches = Number(document.getElementById('rulePunches').value||0);
+    const label = String(document.getElementById('ruleLabel').value||'').trim();
+    if(punches<1 || !label){ alert('Enter punches (>=1) and a reward label.'); return; }
+    addRule(punches, label); document.getElementById('ruleLabel').value='';
+  });
+  document.body.addEventListener('click',e=>{ const del=e.target.closest('[data-rule-del]'); if(del){ deleteRule(del.getAttribute('data-rule-del')); }});
+
   // First paint
   save(); render(); renderRules();
 } catch(e){ showFatal(e); } });
@@ -175,4 +184,4 @@ function render(){ renderClients($('#searchInput')?.value||''); }
 // Rules UI
 function addRule(punches,label){ const r={id:uid(),owner_key:state.settings.ownerKey,punches:Math.max(1,Number(punches)||1),label:String(label||'Reward')}; (state.settings.rewardsRules||=[]).push(r); save(); renderRules(); supabaseUpsertRule(r).catch(console.warn); }
 function deleteRule(id){ state.settings.rewardsRules=(state.settings.rewardsRules||[]).filter(x=>x.id!==id); save(); renderRules(); supabaseDeleteRule(id).catch(console.warn); }
-function renderRules(){ const box=$('#rulesList'); box.innerHTML=''; const list=(state.settings.rewardsRules||[]).slice().sort((a,b)=>a.punches-b.punches); if(!list.length){ box.innerHTML='<div class="info">No rules yet. Add one above.</div>'; return;} for(const r of list){ const el=document.createElement('div'); el.className='rule'; el.innerHTML=`<div><strong>${r.punches} punches</strong> → ${escapeHTML(r.label)}</div><div class="row"><button class="btn" data-rule-del="${r.id}">Delete</button></div>`; box.appendChild(el);} document.body.addEventListener('click',e=>{ const del=e.target.closest('[data-rule-del]'); if(del){ deleteRule(del.getAttribute('data-rule-del')); }}); }
+function renderRules(){ const box=$('#rulesList'); box.innerHTML=''; const list=(state.settings.rewardsRules||[]).slice().sort((a,b)=>a.punches-b.punches); if(!list.length){ box.innerHTML='<div class="info">No rules yet. Add one above.</div>'; return;} for(const r of list){ const el=document.createElement('div'); el.className='rule'; el.innerHTML=`<div><strong>${r.punches} punches</strong> → ${escapeHTML(r.label)}</div><div class="row"><button class="btn" data-rule-del="${r.id}">Delete</button></div>`; box.appendChild(el);} }
