@@ -3,24 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Punch Card Rewards</title>
-  <meta name="theme-color" content="#111111" />
+  <title>Wanderlust Lash Bar — Punch Card</title>
+  <meta name="theme-color" content="#ff6ea6" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="stylesheet" href="styles.css" />
-  <script>
-    // Minimal iOS PWA standalone viewport fix
-    if (navigator.standalone) {
-      document.documentElement.classList.add('standalone');
-    }
-  </script>
+  <script>if (navigator.standalone) { document.documentElement.classList.add('standalone'); }</script>
 </head>
 <body>
   <header class="app-bar">
-    <h1 id="brandTitle">Punch Card</h1>
-    <button id="lockBtn" class="icon-btn" title="Lock/Unlock" aria-label="Lock/Unlock">
-      🔒
-    </button>
+    <h1 id="brandTitle">Wanderlust Lash Bar</h1>
+    <button id="lockBtn" class="icon-btn" title="Lock/Unlock" aria-label="Lock/Unlock">🔒</button>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Main Navigation">
@@ -36,7 +29,7 @@
         <input id="searchInput" class="search" type="search" placeholder="Search clients..." />
         <button id="addClientBtn" class="btn primary">+ New</button>
       </div>
-      <div id="clientsList" class="cards"></div>
+      <div id="clientsList" class="cards" tabindex="-1"></div>
     </section>
 
     <!-- REWARDS -->
@@ -54,11 +47,11 @@
         <h2>Business</h2>
         <label>
           Business Name
-          <input type="text" id="businessName" placeholder="e.g. Selvin’s Lash Lounge" />
+          <input type="text" id="businessName" placeholder="Wanderlust Lash Bar" />
         </label>
         <label>
           Brand Color
-          <input type="color" id="brandColor" value="#7c3aed" />
+          <input type="color" id="brandColor" value="#ff6ea6" />
         </label>
 
         <h2>Security</h2>
@@ -89,10 +82,9 @@
     </section>
   </main>
 
-  <!-- FLOATING ADD BUTTON ON CLIENT TAB -->
   <button id="fabAdd" class="fab" aria-label="Add client">＋</button>
 
-  <!-- MODALS -->
+  <!-- Client Modal -->
   <dialog id="clientModal" class="modal">
     <form method="dialog" id="clientForm" class="modal-card">
       <h3 id="clientModalTitle">New Client</h3>
@@ -116,20 +108,23 @@
     </form>
   </dialog>
 
-  <dialog id="pinModal" class="modal">
-    <form method="dialog" id="pinForm" class="modal-card">
-      <h3>Enter PIN</h3>
-      <label>
-        PIN
-        <input id="pinCheck" type="password" inputmode="numeric" pattern="[0-9]*" required />
-      </label>
-      <menu class="modal-actions">
-        <button value="cancel" class="btn ghost">Cancel</button>
-        <button id="unlockBtn" value="default" class="btn primary">Unlock</button>
-      </menu>
-    </form>
+  <!-- Share Modal -->
+  <dialog id="shareModal" class="modal">
+    <div class="modal-card">
+      <h3>Share Client Progress</h3>
+      <p class="muted">Send this link to your client or let them scan the QR code.</p>
+      <input id="shareLinkInput" class="search" readonly />
+      <div id="qrArea" style="display:grid;place-items:center;margin:12px 0;"></div>
+      <div class="modal-actions">
+        <button class="btn ghost" id="copyLinkBtn">Copy Link</button>
+        <button class="btn" id="shareNativeBtn">Share…</button>
+        <button class="btn primary" id="closeShareBtn">Done</button>
+      </div>
+    </div>
   </dialog>
 
+  <script src="qrcode.min.js" defer></script>
+  <script src="config.js" defer></script>
   <script src="app.js" defer></script>
 </body>
 </html>

@@ -1,10 +1,10 @@
 {
-  "name": "Punch Card Rewards",
-  "short_name": "Punch Card",
+  "name": "Wanderlust Lash Bar \u2014 Punch Card",
+  "short_name": "Wanderlust Punch",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#0b0b0f",
-  "theme_color": "#7c3aed",
+  "background_color": "#ffffff",
+  "theme_color": "#ff6ea6",
   "icons": [
     {
       "src": "icons/icon-192.png",
