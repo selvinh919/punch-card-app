@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Punch Card Rewards</title>
+  <meta name="theme-color" content="#111111" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    // Minimal iOS PWA standalone viewport fix
+    if (navigator.standalone) {
+      document.documentElement.classList.add('standalone');
+    }
+  </script>
+</head>
+<body>
+  <header class="app-bar">
+    <h1 id="brandTitle">Punch Card</h1>
+    <button id="lockBtn" class="icon-btn" title="Lock/Unlock" aria-label="Lock/Unlock">
+      🔒
+    </button>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Main Navigation">
+    <button class="tab active" data-tab="clients" role="tab" aria-selected="true">Clients</button>
+    <button class="tab" data-tab="rewards" role="tab" aria-selected="false">Rewards</button>
+    <button class="tab" data-tab="settings" role="tab" aria-selected="false">Settings</button>
+  </nav>
+
+  <main>
+    <!-- CLIENTS -->
+    <section id="tab-clients" class="tab-panel active" role="tabpanel" aria-labelledby="Clients">
+      <div class="toolbar">
+        <input id="searchInput" class="search" type="search" placeholder="Search clients..." />
+        <button id="addClientBtn" class="btn primary">+ New</button>
+      </div>
+      <div id="clientsList" class="cards"></div>
+    </section>
+
+    <!-- REWARDS -->
+    <section id="tab-rewards" class="tab-panel" role="tabpanel" aria-labelledby="Rewards">
+      <div class="info">
+        <h2>Recent Activity</h2>
+        <p>Last 20 punches or redemptions.</p>
+      </div>
+      <div id="activityFeed" class="feed"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="tab-settings" class="tab-panel" role="tabpanel" aria-labelledby="Settings">
+      <form id="settingsForm" class="settings-form">
+        <h2>Business</h2>
+        <label>
+          Business Name
+          <input type="text" id="businessName" placeholder="e.g. Selvin’s Lash Lounge" />
+        </label>
+        <label>
+          Brand Color
+          <input type="color" id="brandColor" value="#7c3aed" />
+        </label>
+
+        <h2>Security</h2>
+        <label>
+          App PIN (optional)
+          <input type="password" id="pinInput" inputmode="numeric" pattern="[0-9]*" placeholder="4–8 digits" />
+        </label>
+        <small>Set a PIN to lock the app on this device.</small>
+
+        <h2>Data</h2>
+        <div class="row">
+          <button type="button" id="backupBtn" class="btn">Export Backup</button>
+          <label class="file-btn">
+            <input type="file" id="restoreFile" accept=".json" hidden />
+            <span class="btn">Import Backup</span>
+          </label>
+        </div>
+        <small>Your data is stored locally on this device. Export regularly if you want a copy.</small>
+
+        <div class="row" style="margin-top:1rem;">
+          <button type="button" id="demoBtn" class="btn ghost">Load Demo Data</button>
+          <button type="button" id="resetBtn" class="btn danger">Erase All Data</button>
+        </div>
+      </form>
+      <footer class="credits">
+        <span>Made for your loyalty program ❤️</span>
+      </footer>
+    </section>
+  </main>
+
+  <!-- FLOATING ADD BUTTON ON CLIENT TAB -->
+  <button id="fabAdd" class="fab" aria-label="Add client">＋</button>
+
+  <!-- MODALS -->
+  <dialog id="clientModal" class="modal">
+    <form method="dialog" id="clientForm" class="modal-card">
+      <h3 id="clientModalTitle">New Client</h3>
+      <input type="hidden" id="clientId" />
+      <label>
+        Name
+        <input id="clientName" type="text" required placeholder="Client name" />
+      </label>
+      <label>
+        Phone (optional)
+        <input id="clientPhone" type="tel" placeholder="(555) 123-4567" />
+      </label>
+      <label>
+        Reward Goal (punches to redeem)
+        <input id="clientGoal" type="number" min="1" value="10" required />
+      </label>
+      <menu class="modal-actions">
+        <button value="cancel" class="btn ghost">Cancel</button>
+        <button id="saveClientBtn" value="default" class="btn primary">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <dialog id="pinModal" class="modal">
+    <form method="dialog" id="pinForm" class="modal-card">
+      <h3>Enter PIN</h3>
+      <label>
+        PIN
+        <input id="pinCheck" type="password" inputmode="numeric" pattern="[0-9]*" required />
+      </label>
+      <menu class="modal-actions">
+        <button value="cancel" class="btn ghost">Cancel</button>
+        <button id="unlockBtn" value="default" class="btn primary">Unlock</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
