@@ -1,97 +1,53 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Wanderlust Lash Bar — Rewards</title>
-<link rel="stylesheet" href="styles.css" />
-<style>
-  body{max-width:640px;margin:0 auto;padding:16px}
-  header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-  h1{font-size:22px;margin:0}
-  .card{cursor:auto}
-</style>
+<link rel="stylesheet" href="styles.css"/>
 <script src="config.js"></script>
-</head>
-<body>
-<header>
-  <img src="logo-lash.svg" class="lash-logo" alt="" />
-  <h1 id="biz">Wanderlust Lash Bar</h1>
-</header>
-<div id="card" class="card">
-  <h3 id="name">Client</h3>
-  <div class="muted" id="meta"></div>
-  <div class="progress"><div id="bar" style="width:0%"></div></div>
-  <div class="muted" id="hint"></div>
-  <div class="muted" id="upcoming" style="margin-top:4px"></div>
-  <div class="muted" id="eligible" style="margin-top:6px"></div>
-  <div class="muted" id="last" style="margin-top:6px"></div>
-</div>
-<p class="muted">This page auto-updates after each appointment. Refresh to see the latest.</p>
+<style>body{max-width:720px;margin:0 auto;padding:16px} header{display:flex;align-items:center;gap:10px;margin-bottom:10px} h1{font-size:22px;margin:0} .card{cursor:auto}</style>
+</head><body>
+<header><img id="logo" src="logo-lash.svg" class="lash-logo" alt=""/><h1 id="biz">Wanderlust Lash Bar</h1></header>
+<div id="card" class="card"><h3 id="name">Client</h3><div class="muted" id="meta"></div><div class="progress"><div id="bar" style="width:0%"></div></div><div class="muted" id="hint"></div><div class="muted" id="upcoming" style="margin-top:4px"></div><div class="muted" id="eligible" style="margin-top:6px"></div><div class="muted" id="last" style="margin-top:6px"></div></div>
+<p class="muted">This page auto-updates after appointments. Refresh to see the latest.</p>
 <script>
-const params = new URLSearchParams(location.search);
-const slug = params.get('c');
-const url = window.PUNCH_CONFIG?.SUPABASE_URL;
-const key = window.PUNCH_CONFIG?.SUPABASE_ANON_KEY;
-function H(s){ return (s??'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-function headers(){ return { apikey:key, Authorization:'Bearer '+key }; }
-async function getJSON(u){ const r = await fetch(u, { headers: headers() }); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
-function byPunches(a,b){ return a.punches - b.punches; }
+const params=new URLSearchParams(location.search); const slug=params.get('c');
+const url=window.PUNCH_CONFIG?.SUPABASE_URL; const key=window.PUNCH_CONFIG?.SUPABASE_ANON_KEY;
+function H(s){return (s??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[m]))}
+function headers(){return {apikey:key,Authorization:'Bearer '+key}}
+async function getJSON(u){
+  const r=await fetch(u,{headers:headers()});
+  if(!r.ok){
+    const txt=await r.text().catch(()=> '');
+    throw new Error('HTTP '+r.status+(txt?': '+txt:''));
+  }
+  return r.json();
+}
+function fontLink(n){const map={'Poppins':'Poppins:wght@400;600','Quicksand':'Quicksand:wght@400;600','Nunito':'Nunito:wght@400;700','Playfair Display':'Playfair+Display:wght@400;700','Pacifico':'Pacifico'}; const spec=map[n]; return spec?('https://fonts.googleapis.com/css2?family='+spec+'&display=swap'):''}
 
-async function main(){
+(async function main(){
   if(!slug) throw new Error('Missing link');
   if(!url||!key) throw new Error('Not configured');
-  const client = (await getJSON(url + '/rest/v1/clients?select=*&public_slug=eq.' + encodeURIComponent(slug)))[0];
+  const client=(await getJSON(url+'/rest/v1/clients?select=*&public_slug=eq.'+encodeURIComponent(slug)))[0];
   if(!client) throw new Error('Link not found');
-  const branding = (await getJSON(url + '/rest/v1/branding?select=business_name,brand_color,share_theme,emoji_headings,owner_key=eq.' + encodeURIComponent(client.owner_key)))[0];
-  const rules = await getJSON(url + '/rest/v1/rules?select=punches,label&owner_key=eq.' + encodeURIComponent(client.owner_key) + '&order=punches.asc');
+  const branding=(await getJSON(url+'/rest/v1/branding?select=business_name,brand_color,header_text_color,header_bg_color,share_theme,share_font,emoji_headings,header_logo_data,bg_image_data&owner_key=eq.'+encodeURIComponent(client.owner_key)))[0];
+  const rules=await getJSON(url+'/rest/v1/rules?select=id,punches,label&owner_key=eq.'+encodeURIComponent(client.owner_key)+'&order=punches.asc');
 
-  document.documentElement.style.setProperty('--brand', (branding && branding.brand_color) || '#ff6ea6');
-  document.getElementById('biz').textContent = branding?.business_name || 'Wanderlust Lash Bar';
-  document.getElementById('name').textContent = (branding?.emoji_headings?'💖 ':'') + (client.name || 'Client');
-  document.getElementById('meta').textContent = `${client.punches}/${client.goal} punches` + (client.total_rewards?` · ${client.total_rewards} rewards`:'') ;
+  const font=branding?.share_font||'system-ui'; if(font!=='system-ui'){ const l=document.createElement('link'); l.rel='stylesheet'; l.href=fontLink(font); document.head.appendChild(l); document.documentElement.style.setProperty('--app-font',`"${font}", system-ui,-apple-system,Segoe UI,Roboto,Arial`); }
+  document.documentElement.style.setProperty('--brand',branding?.brand_color||'#ff6ea6');
+  document.documentElement.style.setProperty('--header-text',branding?.header_text_color||'#111'); document.documentElement.style.setProperty('--header-bg',branding?.header_bg_color||'#fff');
+  document.getElementById('biz').textContent=branding?.business_name||'Wanderlust Lash Bar';
+  document.getElementById('logo').src=branding?.header_logo_data||'logo-lash.svg';
+  if(branding?.bg_image_data){ document.body.style.backgroundImage='url('+branding.bg_image_data+')'; }
+  else { const t=branding?.share_theme||'classic'; if(t==='girly') document.body.style.backgroundImage='linear-gradient(180deg,#fff,#ffe4ef)'; else if(t==='minimal-blush') document.body.style.backgroundImage='linear-gradient(180deg,#fff6f9,#ffe1ee)'; else if(t==='candy-pop'){ document.body.style.backgroundImage='radial-gradient(#ffd1e6 1px, transparent 1px), radial-gradient(#ffd1e6 1px, transparent 1px)'; document.body.style.backgroundPosition='0 0,8px 8px'; document.body.style.backgroundSize='16px 16px'; } }
 
-  const pct = client.goal ? Math.min(100, Math.round((client.punches / client.goal) * 100)) : 0;
-  document.getElementById('bar').style.width = pct + '%';
-
-  function nextHint(){
-    const cur = client.punches||0;
-    const up = rules.find(r=>r.punches>cur);
-    if (up){ const n=up.punches-cur; return `${n} more ${n===1?'punch':'punches'} until ${up.label}`; }
-    // else show top eligible
-    const elig = eligible();
-    if (elig.length){ return 'Eligible: ' + elig[elig.length-1].rule.label; }
-    return '';
-  }
-  function eligible(){
-    const cur=client.punches||0, list=[];
-    for (const r of rules){ const earned=Math.floor(cur/r.punches), used=(client.redeem_tallies||{})[r.id]||0; if(earned-used>0) list.push({rule:r,available:earned-used}); }
-    return list.sort(byPunches);
-  }
-  function upcoming(){
-    const cur=client.punches||0;
-    const ups=rules.filter(r=>r.punches>cur);
-    return ups.length ? 'Next: '+ups.slice(0,3).map(r=>`${r.punches-cur}→${r.label}`).join('; ') : '';
-  }
-
-  document.getElementById('hint').textContent = nextHint();
-  document.getElementById('upcoming').textContent = upcoming();
-  const e = eligible();
-  document.getElementById('eligible').textContent = e.length ? ('Eligible now: ' + e.map(x=>x.rule.label + (x.available>1?` x${x.available}`:'')).join(', ')) : '';
-  document.getElementById('last').textContent = client.last_redeem_label ? ('Last redeemed: ' + client.last_redeem_label) : '';
-
-  if ((branding?.share_theme||'classic')==='girly'){
-    document.body.style.backgroundImage='linear-gradient(180deg,#fff,#ffe4ef)';
-  } else if (branding?.share_theme==='minimal-blush'){
-    document.body.style.backgroundImage='linear-gradient(180deg,#fff6f9,#ffe1ee)';
-  } else if (branding?.share_theme==='candy-pop'){
-    document.body.style.backgroundImage='radial-gradient(#ffd1e6 1px, transparent 1px), radial-gradient(#ffd1e6 1px, transparent 1px)';
-    document.body.style.backgroundPosition='0 0, 8px 8px'; document.body.style.backgroundSize='16px 16px';
-  }
-}
-main().catch(err=>{
-  document.body.innerHTML = '<div class="card"><h3>Could not load link</h3><div class="muted">'+H(err.message||err)+'</div></div>';
-});
+  document.getElementById('name').textContent=(branding?.emoji_headings?'💖 ':'')+(client.name||'Client');
+  document.getElementById('meta').textContent=`${client.punches}/${client.goal} punches`+(client.total_rewards?` · ${client.total_rewards} rewards`:'');
+  const pct=client.goal?Math.min(100,Math.round(100*client.punches/client.goal)):0; document.getElementById('bar').style.width=pct+'%';
+  function eligible(){ const cur=client.punches||0, out=[]; for(const r of rules){ const earned=Math.floor(cur/r.punches), used=(client.redeem_tallies||{})[r.id]||0; if(earned-used>0) out.push({rule:r,available:earned-used}); } return out; }
+  function nextHint(){ const cur=client.punches||0; const up=rules.find(r=>r.punches>cur); if(up){const n=up.punches-cur; return `${n} more ${n===1?'punch':'punches'} until ${up.label}`;} const e=eligible(); return e.length?('Eligible: '+e[e.length-1].rule.label):''; }
+  function upcoming(){ const cur=client.punches||0; const ups=rules.filter(r=>r.punches>cur); return ups.length?('Next: '+ups.slice(0,3).map(r=>`${r.punches-cur}→${r.label}`).join('; ')):''; }
+  document.getElementById('hint').textContent=nextHint(); document.getElementById('upcoming').textContent=upcoming();
+  const e=eligible(); document.getElementById('eligible').textContent = e.length?('Eligible now: '+e.map(x=>x.rule.label+(x.available>1?` x${x.available}`:'')).join(', ')):'';
+  document.getElementById('last').textContent = client.last_redeem_label?('Last redeemed: '+client.last_redeem_label):'';
+})().catch(err=>{ document.body.innerHTML='<div class="card"><h3>Could not load link</h3><div class="muted">'+H(err.message||err)+'</div></div>'; });
 </script>
-</body>
-</html>
+</body></html>
