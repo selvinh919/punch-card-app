@@ -1,4 +1,4 @@
-const CACHE = 'wanderlust-punchcard-v2_1';
+const CACHE = 'wanderlust-punchcard-v2_2';
 const ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const ASSETS = [
   './share.html',
   './config.js',
   './qrcode.min.js',
+  './logo-lash.svg',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'

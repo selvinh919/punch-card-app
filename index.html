@@ -12,8 +12,14 @@
 </head>
 <body>
   <header class="app-bar">
-    <h1 id="brandTitle">Wanderlust Lash Bar</h1>
-    <button id="lockBtn" class="icon-btn" title="Lock/Unlock" aria-label="Lock/Unlock">🔒</button>
+    <div class="brand-wrap">
+      <img src="logo-lash.svg" alt="Lash logo" class="lash-logo" />
+      <h1 id="brandTitle">Wanderlust Lash Bar</h1>
+    </div>
+    <div class="right-tools">
+      <span id="cloudStatus" class="cloud-status" title="Cloud backup status">⏳</span>
+      <button id="lockBtn" class="icon-btn" title="Lock/Unlock" aria-label="Lock/Unlock">🔒</button>
+    </div>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Main Navigation">
@@ -61,15 +67,22 @@
         </label>
         <small>Set a PIN to lock the app on this device.</small>
 
+        <h2>Cloud Backup</h2>
+        <div class="row">
+          <button type="button" id="backupCloudBtn" class="btn">Force Cloud Backup</button>
+          <button type="button" id="restoreCloudBtn" class="btn">Restore from Cloud</button>
+        </div>
+        <small>Backups save your full data (clients, activity, settings) to Supabase so you can recover on a new phone.</small>
+
         <h2>Data</h2>
         <div class="row">
-          <button type="button" id="backupBtn" class="btn">Export Backup</button>
+          <button type="button" id="backupBtn" class="btn">Export Backup (file)</button>
           <label class="file-btn">
             <input type="file" id="restoreFile" accept=".json" hidden />
-            <span class="btn">Import Backup</span>
+            <span class="btn">Import Backup (file)</span>
           </label>
         </div>
-        <small>Your data is stored locally on this device. Export regularly if you want a copy.</small>
+        <small>Your data is also stored locally on this device. Export regularly if you want your own copy.</small>
 
         <div class="row" style="margin-top:1rem;">
           <button type="button" id="demoBtn" class="btn ghost">Load Demo Data</button>

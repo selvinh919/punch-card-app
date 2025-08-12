@@ -22,9 +22,13 @@ body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,Se
   -webkit-backdrop-filter:saturate(1.2) blur(10px);backdrop-filter:saturate(1.2) blur(10px);
   border-bottom:1px solid var(--border);
 }
+.brand-wrap{display:flex;align-items:center;gap:10px}
+.lash-logo{height:26px;width:auto;display:block}
 .app-bar h1{margin:0;font-size:20px;letter-spacing:.2px;color:#111111}
 .icon-btn{background:none;border:0;color:#111111;font-size:20px;cursor:pointer;opacity:.85}
 .icon-btn:hover{opacity:1}
+.cloud-status{font-size:18px;margin-right:10px;opacity:.7}
+.cloud-ok{color:#16a34a} .cloud-warn{color:#d97706} .cloud-bad{color:#ef4444}
 
 .tabs{display:flex;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:56px;z-index:19}
 .tab{border:1px solid var(--border);background:#f9fafb;color:#111827;padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap}
@@ -55,7 +59,7 @@ main{padding:12px 14px 80px;max-width:1100px;margin:0 auto}
 
 .feed{display:grid;gap:12px;margin-top:12px}
 .feed-item{background:var(--card);border-radius:12px;padding:12px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.feed-item small{color:var(--muted)}
+.feed-item small{color:#6b7280}
 
 .settings-form{display:grid;gap:14px;max-width:720px}
 .settings-form label{display:grid;gap:6px}
@@ -73,7 +77,7 @@ main{padding:12px 14px 80px;max-width:1100px;margin:0 auto}
 
 .info{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px}
 
-.credits{opacity:.7;margin-top:16px;color:var(--muted)}
+.credits{opacity:.7;margin-top:16px;color:#6b7280}
 
 /* iOS standalone safe area */
 .standalone .app-bar{padding-top:calc(14px + env(safe-area-inset-top))}

@@ -1,0 +1,17 @@
+-- Clients table (public share data)
+create table if not exists public.clients (
+  id text primary key,
+  name text not null,
+  phone text,
+  goal int not null default 10,
+  punches int not null default 0,
+  total_rewards int not null default 0,
+  last_visit timestamptz,
+  public_slug text unique not null,
+  updated_at timestamptz default now()
+);
+alter table public.clients enable row level security;
+create policy if not exists "Public read clients" on public.clients for select to anon using ( true );
+create policy if not exists "Anon upsert clients" on public.clients for insert to anon with check ( true );
+create policy if not exists "Anon update clients" on public.clients for update to anon using ( true ) with check ( true );
+create policy if not exists "Anon delete clients" on public.clients for delete to anon using ( true );
