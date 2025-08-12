@@ -102,12 +102,44 @@ function upcomingListFor(client){
     return `${remaining}→${r.label}`;
   }).join('; ');
 }
+
+function getTallies(c){ return c.redeemTallies || {}; }
+function setTally(c, ruleId, n){ c.redeemTallies = c.redeemTallies || {}; c.redeemTallies[ruleId] = n; }
+function redeemedCount(c, ruleId){ const t = getTallies(c); return Number(t[ruleId]||0); }
+function eligibleRewardsFor(c){
+  const rules = (state.settings.rewardsRules||[]).slice().sort((a,b)=>a.punches-b.punches);
+  const current = c.punches||0;
+  const list = [];
+  for (const r of rules){
+    const earned = Math.floor(current / r.punches);
+    const used = redeemedCount(c, r.id);
+    if (earned - used > 0) list.push({rule:r, available: earned - used});
+  }
+  return list;
+}
+function topEligibleLabel(c){
+  const list = eligibleRewardsFor(c);
+  if (!list.length) return '';
+  return list[list.length-1].rule.label; // highest tier
+}
+
+function showToast(msg){
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>el.classList.remove('show'), 2200);
+}
+
+
 function achievedBadgeFor(client){
   if (!state.settings.showBadges) return '';
-  const rules = (state.settings.rewardsRules||[]).slice().sort((a,b)=>b.punches-a.punches);
-  const current = client.punches||0;
-  const achieved = rules.find(r => r.punches <= current);
-  return achieved ? `Eligible: ${achieved.label}` : '';
+  const list = eligibleRewardsFor(client);
+  if (!list.length) return '';
+  const top = list[list.length-1].rule;
+  return `Eligible: ${top.label}`;
+}` : '';
 }
 
 // ---- Clients ----
@@ -128,6 +160,7 @@ function renderClients(query){
     const hint = nextRewardHintFor(c);
     const upcoming = upcomingListFor(c);
     const badge = achievedBadgeFor(c);
+    const canRedeem = !!topEligibleLabel(c);
     card.innerHTML = `
       ${badge ? `<span class="elig">${escapeHTML(badge)}</span>` : ''}
       <div class="row" style="justify-content:space-between;gap:8px;">
@@ -138,6 +171,7 @@ function renderClients(query){
       <div class="progress" aria-label="Progress"><div style="width:${pct}%"></div></div>
       ${hint ? `<div class="muted" style="margin-top:4px">${escapeHTML(hint)}</div>` : ''}
       ${upcoming ? `<div class="muted" style="margin-top:2px">${escapeHTML(upcoming)}</div>` : ''}
+      ${canRedeem ? `<div class="actions"><button class="btn primary" data-redeem-id="${c.id}">Redeem ${topEligibleLabel(c) || ''}</button></div>` : ''}
     `;
     wrap.appendChild(card);
   }
@@ -152,10 +186,17 @@ function openDetail(id){
   $('#detailInfo').textContent = (c.phone?c.phone+' · ':'') + `${c.punches}/${c.goal} punches`;
   const pct = c.goal ? Math.min(100, Math.round((c.punches / c.goal) * 100)) : 0;
   $('#detailProgress').style.width = pct + '%';
-  $('#detailRedeemBtn').disabled = !(c.punches >= c.goal);
+  const lbl = topEligibleLabel(c); $('#detailRedeemBtn').textContent = lbl ? ('Redeem ' + lbl) : 'Redeem'; $('#detailRedeemBtn').disabled = !lbl;
   $('#detailHint').textContent = nextRewardHintFor(c) || '';
   $('#detailUpcoming').textContent = upcomingListFor(c) || '';
   const feed = $('#detailHistory'); feed.innerHTML = '';
+  // Ensure a Delete button exists in the modal actions
+  const actions = $('#detailModal .modal-actions');
+  if (actions && !actions.querySelector('#detailDeleteBtn')){
+    const delBtn = document.createElement('button'); delBtn.id='detailDeleteBtn'; delBtn.className='btn danger'; delBtn.textContent='Delete';
+    actions.insertBefore(delBtn, actions.firstChild);
+    delBtn.addEventListener('click', ()=>{ if (confirm('Delete this client?')){ deleteClient(id); $('#detailModal').close(); } });
+  }
   for (const h of c.history.slice(0,50)){
     const row = document.createElement('div'); row.className='feed-item';
     const verb = h.type === 'punch' ? 'Punched' : h.type === 'redeem' ? 'Redeemed' : h.type;
@@ -166,7 +207,38 @@ function openDetail(id){
 }
 
 function detailPunch(){ if (!currentDetailId) return; punch(currentDetailId, 1); openDetail(currentDetailId); }
-function detailRedeem(){ if (!currentDetailId) return; redeem(currentDetailId); openDetail(currentDetailId); }
+function detailRedeem(){ if (!currentDetailId) return; openRedeemPicker(currentDetailId); }
+
+const redeemPicker = document.getElementById('redeemPicker');
+function openRedeemPicker(id){
+  const c = state.clients.find(x=>x.id===id); if (!c) return;
+  const list = eligibleRewardsFor(c);
+  if (!list.length) { alert('No rewards eligible yet.'); return; }
+  if (list.length === 1){ redeem(id, list[0].rule.id); return; }
+  const box = document.getElementById('redeemOptions'); box.innerHTML = '';
+  for (const item of list){
+    const btn = document.createElement('button');
+    btn.className = 'btn primary';
+    btn.style.display = 'block';
+    btn.style.width = '100%';
+    btn.style.textAlign = 'left';
+    btn.style.margin = '6px 0';
+    btn.setAttribute('data-redeem-rule', item.rule.id);
+    btn.textContent = `${item.rule.label}  (${item.available} available)`;
+    box.appendChild(btn);
+  }
+  redeemPicker.dataset.clientId = id;
+  redeemPicker.showModal();
+}
+document.getElementById('redeemCancelBtn')?.addEventListener('click', ()=>redeemPicker.close());
+redeemPicker?.addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-redeem-rule]'); if (!btn) return;
+  const id = redeemPicker.dataset.clientId;
+  const ruleId = btn.getAttribute('data-redeem-rule');
+  redeemPicker.close();
+  redeem(id, ruleId);
+});
+
 function detailShare(){ if (!currentDetailId) return; openShareForClient(currentDetailId); }
 function detailEdit(){ if (!currentDetailId) return; const c = state.clients.find(x=>x.id===currentDetailId); openClientModal(c); }
 
@@ -218,11 +290,27 @@ async function fileToDataURLCompressed(file, maxW=1600, quality=0.8){
 function newClientPayload({name, phone='', goal=10}){
   return { id: uid(), name: name.trim(), phone: phone.trim(), goal: Math.max(1, Number(goal)||10), punches:0, totalRewards:0, lastVisit:nowISO(), public_slug: slug(), history:[{type:'create', amount:0, at: nowISO()}] };
 }
-function addClient({name, phone, goal}){ const c = newClientPayload({name, phone, goal}); state.clients.push(c); state.activity.unshift({id: uid(), clientId: c.id, clientName: c.name, type:'create', amount:0, at: nowISO()}); save(); render(); syncClient(c).catch(console.warn); }
-function updateClient(id, fields){ const c = state.clients.find(x=>x.id===id); if (!c) return; Object.assign(c, fields); c.history.unshift({type:'edit', amount:0, at: nowISO()}); save(); render(); syncClient(c).catch(console.warn); }
+function addClient({name, phone, goal}){ const c = newClientPayload({name, phone, goal}); state.clients.push(c); state.activity.unshift({id: uid(), clientId: c.id, clientName: c.name, type:'create', amount:0, at: nowISO()}); save(); render(); showToast('Redeemed 🎁 ' + chosen.label); syncClient(c).catch(console.warn); }
+function updateClient(id, fields){ const c = state.clients.find(x=>x.id===id); if (!c) return; Object.assign(c, fields); c.history.unshift({type:'edit', amount:0, at: nowISO()}); save(); render(); showToast('Redeemed 🎁 ' + chosen.label); syncClient(c).catch(console.warn); }
 function deleteClient(id){ const c = state.clients.find(x=>x.id===id); if (!c) return; if (!confirm(`Delete ${c.name}? This cannot be undone.`)) return; state.clients = state.clients.filter(x=>x.id!==id); save(); render(); deleteRemoteClient(c).catch(console.warn); }
-function punch(id, amount=1){ const c = state.clients.find(x=>x.id===id); if (!c) return; c.punches = Math.max(0, c.punches + amount); c.lastVisit = nowISO(); c.history.unshift({type:'punch', amount, at: nowISO()}); state.activity.unshift({id: uid(), clientId: id, clientName: c.name, type:'punch', amount, at: nowISO()}); save(); render(); syncClient(c).catch(console.warn); }
-function redeem(id){ const c = state.clients.find(x=>x.id===id); if (!c) return; if (c.punches < c.goal) return; c.punches = 0; c.totalRewards = (c.totalRewards||0)+1; c.lastVisit = nowISO(); c.history.unshift({type:'redeem', amount:1, at: nowISO()}); state.activity.unshift({id: uid(), clientId: id, clientName: c.name, type:'redeem', amount:1, at: nowISO()}); save(); render(); syncClient(c).catch(console.warn); }
+function punch(id, amount=1){ const c = state.clients.find(x=>x.id===id); if (!c) return; c.punches = Math.max(0, c.punches + amount); c.lastVisit = nowISO(); c.history.unshift({type:'punch', amount, at: nowISO()}); state.activity.unshift({id: uid(), clientId: id, clientName: c.name, type:'punch', amount, at: nowISO()}); save(); render(); showToast('Redeemed 🎁 ' + chosen.label); syncClient(c).catch(console.warn); }
+function redeem(id, ruleId){
+  const c = state.clients.find(x=>x.id===id); if (!c) return;
+  const elig = eligibleRewardsFor(c);
+  if (!elig.length) { alert('No rewards eligible yet.'); return; }
+  let chosen = elig[elig.length-1].rule; // highest tier
+  if (ruleId){ const found = elig.find(x=>x.rule.id===ruleId); if (found) chosen = found.rule; }
+  if (!confirm(`Redeem “${chosen.label}” for ${c.name}?`)) return;
+  const used = redeemedCount(c, chosen.id);
+  setTally(c, chosen.id, used + 1);
+  c.totalRewards = (c.totalRewards||0) + 1;
+  c.lastVisit = nowISO();
+  c.lastRedeemLabel = chosen.label;
+  c.lastRedeemAt = nowISO();
+  c.history.unshift({type:'redeem', amount:0, label: chosen.label, at: nowISO()});
+  state.activity.unshift({id: uid(), clientId: id, clientName: c.name, type:'redeem', label: chosen.label, amount:0, at: nowISO()});
+  save(); render(); showToast('Redeemed 🎁 ' + chosen.label); syncClient(c).catch(console.warn);
+}); state.activity.unshift({id: uid(), clientId: id, clientName: c.name, type:'redeem', amount:1, at: nowISO()}); save(); render(); showToast('Redeemed 🎁 ' + chosen.label); syncClient(c).catch(console.warn); }
 
 // ---- Share / QR ----
 
@@ -287,7 +375,7 @@ function headers(){ return { 'apikey':window.PUNCH_CONFIG.SUPABASE_ANON_KEY, 'Au
 async function supabaseUpsertClient(c){
   if (!window.PUNCH_CONFIG?.SUPABASE_URL) return;
   const url = `${window.PUNCH_CONFIG.SUPABASE_URL}/rest/v1/clients`;
-  const row = { id:c.id, owner_key: state.settings.ownerKey, name:c.name, phone:c.phone||null, goal:c.goal, punches:c.punches, total_rewards:c.totalRewards||0, last_visit:c.lastVisit, public_slug:c.public_slug, updated_at:new Date().toISOString() };
+  const row = { id:c.id, owner_key: state.settings.ownerKey, name:c.name, phone:c.phone||null, goal:c.goal, punches:c.punches, total_rewards:c.totalRewards||0, last_visit:c.lastVisit, public_slug:c.public_slug, redeem_tallies: c.redeemTallies || {}, last_redeem_label: c.lastRedeemLabel || null, last_redeem_at: c.lastRedeemAt || null, updated_at:new Date().toISOString() };
   const res = await fetch(url, { method:'POST', headers: headers(), body: JSON.stringify([row]) });
   if (!res.ok) throw new Error('Supabase upsert failed: '+res.status);
 }
@@ -361,6 +449,33 @@ async function backupToCloud(){
 }
 const debouncedCloudBackup = debounce(backupToCloud, 1800);
 
+let cloudTimer = null;
+async function loadCloudIfNewer(){
+  if (!window.PUNCH_CONFIG?.SUPABASE_URL) return;
+  try{
+    const url = `${window.PUNCH_CONFIG.SUPABASE_URL}/rest/v1/states?select=payload,updated_at&owner_key=eq.${encodeURIComponent(state.settings.ownerKey)}`;
+    const res = await fetch(url, { headers: headers() });
+    if (!res.ok) return;
+    const rows = await res.json();
+    if (!rows.length) return;
+    const remote = rows[0];
+    const remoteAt = new Date(remote.updated_at || 0).getTime();
+    const localAt = new Date(state._cloudUpdatedAt || 0).getTime();
+    if (remoteAt > localAt){
+      const incoming = remote.payload;
+      if (incoming?.settings) incoming.settings.ownerKey = state.settings.ownerKey;
+      state = incoming;
+      state._cloudUpdatedAt = remote.updated_at;
+      save(); render();
+    }
+  }catch{}
+}
+function startCloudPolling(){
+  if (cloudTimer) clearInterval(cloudTimer);
+  cloudTimer = setInterval(loadCloudIfNewer, 30000);
+}
+
+
 async function restoreFromCloud(){
   if (!window.PUNCH_CONFIG?.SUPABASE_URL) return alert('Cloud not configured');
   const url = `${window.PUNCH_CONFIG.SUPABASE_URL}/rest/v1/states?select=payload&owner_key=eq.${encodeURIComponent(state.settings.ownerKey)}`;
@@ -382,6 +497,8 @@ window.addEventListener('DOMContentLoaded', ()=>{
     const subtabBtn = e.target.closest('.subtab'); if (subtabBtn){ activateSubtab(subtabBtn.dataset.subtab); return; }
   });
   $('#clientsList')?.addEventListener('click', (e)=>{
+    const redeemBtn = e.target.closest('[data-redeem-id]');
+    if (redeemBtn){ const id = redeemBtn.getAttribute('data-redeem-id'); redeem(id); return; }
     const card = e.target.closest('.card'); if (!card) return;
     openDetail(card.dataset.id);
   });
@@ -447,6 +564,12 @@ window.addEventListener('DOMContentLoaded', ()=>{
   $('#backupCloudBtn')?.addEventListener('click', ()=>backupToCloud());
   $('#restoreCloudBtn')?.addEventListener('click', ()=>restoreFromCloud());
 
+  $('#linkOwnerKeyBtn')?.addEventListener('click', async ()=>{
+    const val = ($('#ownerKeyInput')?.value||'').trim(); if(!val) return alert('Paste an Owner Key first.');
+    state.settings.ownerKey = val; save(); await restoreFromCloud(); startCloudPolling(); alert('Device linked!');
+  });
+  $('#syncAllNowBtn')?.addEventListener('click', async ()=>{ await backupToCloud(); await supabaseUpsertBranding(); alert('Synced!'); });
+
   // File export/import
   $('#backupBtn')?.addEventListener('click', ()=>{ const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); const dt=new Date().toISOString().replace(/[:.]/g,'-'); a.download=`wanderlust-punchcard-backup-${dt}.json`; a.click(); URL.revokeObjectURL(a.href); });
   $('#restoreFile')?.addEventListener('change', async e=>{ const file=e.target.files?.[0]; if(!file) return; try{ const text=await file.text(); const imported=JSON.parse(text); if(!imported||!imported.clients||!imported.settings) throw new Error('Invalid backup'); state=imported; save(); render(); alert('Backup imported!'); }catch(err){ console.error(err); alert('Could not import backup.'); } finally{ e.target.value=''; } });
@@ -502,6 +625,8 @@ window.addEventListener('DOMContentLoaded', ()=>{
 
   save(); render();
   loadRulesFromCloud().catch(()=>{});
+  startCloudPolling();
+  loadCloudIfNewer();
 });
 
 // Expose

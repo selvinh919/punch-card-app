@@ -16,11 +16,7 @@
       <img src="logo-lash.svg" alt="Lash logo" class="lash-logo" id="headerLogo" />
       <h1 id="brandTitle">Wanderlust Lash Bar</h1>
     </div>
-    <div class="right-tools">
-      <button id="cloudNowBtn" class="icon-btn" title="Force Cloud Backup" aria-label="Force Cloud Backup">☁️</button>
-      <span id="cloudStatus" class="cloud-status" title="Cloud backup status">⏳</span>
-      <button id="lockBtn" class="icon-btn" title="Lock/Unlock" aria-label="Lock/Unlock">🔒</button>
-    </div>
+    
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Main Navigation">
@@ -174,7 +170,7 @@
             <button type="button" id="backupCloudBtn" class="btn">Force Cloud Backup</button>
             <button type="button" id="restoreCloudBtn" class="btn">Restore from Cloud</button>
           </div>
-          <small>Automatic cloud backup runs after changes.</small>
+          <div class="row" style="margin-top:8px"><input type="text" id="ownerKeyInput" class="search" placeholder="Paste Owner Key to link this device"/><button type="button" id="linkOwnerKeyBtn" class="btn">Link Device</button><button type="button" id="syncAllNowBtn" class="btn">Sync All Now</button></div><small>Automatic cloud backup runs after changes. Linked devices will auto-refresh ~every 30s.</small>
         </form>
       </div>
 
@@ -199,6 +195,7 @@
       </footer>
     </section>
   </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <button id="fabAdd" class="fab" aria-label="Add client">＋</button>
 
@@ -257,6 +254,17 @@
         <button class="btn ghost" id="copyLinkBtn">Copy Link</button>
         <button class="btn" id="shareNativeBtn">Share…</button>
         <button class="btn primary" id="closeShareBtn">Done</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Redeem Picker -->
+  <dialog id="redeemPicker" class="modal">
+    <div class="modal-card">
+      <h3>Choose a reward to redeem</h3>
+      <div id="redeemOptions" class="rules" style="margin-top:8px"></div>
+      <div class="modal-actions">
+        <button class="btn" id="redeemCancelBtn">Cancel</button>
       </div>
     </div>
   </dialog>

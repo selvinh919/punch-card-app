@@ -38,6 +38,7 @@
       <div><span class="badge" id="eligible" style="display:none"></span></div>
       <div class="muted" id="hint" style="margin-top:6px"></div>
       <div class="muted" id="upcoming" style="margin-top:2px"></div>
+      <div class="muted" id="lastRedeem" style="margin-top:6px"></div>
       <div id="errorBox" style="display:none;margin-top:8px" class="err"></div>
       <footer style="margin-top:12px;color:#6b7280">This page updates whenever your stylist records a visit.</footer>
     </div>
@@ -72,7 +73,7 @@
       const headers = { apikey: window.PUNCH_CONFIG.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + window.PUNCH_CONFIG.SUPABASE_ANON_KEY };
 
       // 1) Load client (incl owner_key when available)
-      const urlClient = window.PUNCH_CONFIG.SUPABASE_URL + '/rest/v1/clients?select=name,goal,punches,total_rewards,last_visit,owner_key&public_slug=eq.' + encodeURIComponent(slug);
+      const urlClient = window.PUNCH_CONFIG.SUPABASE_URL + '/rest/v1/clients?select=name,goal,punches,total_rewards,last_visit,owner_key,redeem_tallies,last_redeem_label,last_redeem_at&public_slug=eq.' + encodeURIComponent(slug);
       let c = null;
       try{
         const resC = await fetch(urlClient, { headers });
@@ -105,7 +106,19 @@
         }catch{ /* silent */ }
       }
 
-      // 3) Apply branding (theme/font/logo/color)
+      // helpers for eligibility using tallies
+function redeemedCountShare(tallies, ruleId){ try{ return Number((tallies||{})[ruleId]||0); }catch{return 0;} }
+function eligibleListShare(punches, tallies, rules){
+  const list = [];
+  for (const r of rules){
+    const earned = Math.floor((punches||0) / r.punches);
+    const used = redeemedCountShare(tallies, r.id);
+    if (earned - used > 0) list.push({rule:r, available: earned - used});
+  }
+  return list;
+}
+
+// 3) Apply branding (theme/font/logo/color)
       if (branding){
         document.documentElement.style.setProperty('--brand', branding.brand_color || '#ff6ea6');
         document.getElementById('biz').textContent = branding.business_name || 'Wanderlust Lash Bar';
@@ -115,6 +128,7 @@
         if (branding.bg_image_data){
           document.body.style.backgroundImage = 'url(' + branding.bg_image_data + ')';
         }
+        const font = (branding.share_font || '').trim();
         applyTheme(branding.share_theme || 'classic');
         const font = (branding.share_font || '').trim();
         if (font && font !== 'system-ui'){
@@ -138,8 +152,9 @@
       document.getElementById('updated').textContent = 'Updated ' + new Date(c.last_visit||Date.now()).toLocaleString();
 
       const current = c.punches || 0;
+      const eligList = eligibleListShare(current, c.redeem_tallies || {}, rules);
+      const eligible = eligList.length ? eligList[eligList.length-1].rule : null;
       const next = rules.find(r => r.punches > current);
-      const eligible = rules.filter(r => r.punches <= current).sort((a,b)=>b.punches-a.punches)[0];
       if (eligible){ const el = document.getElementById('eligible'); el.textContent = 'Eligible: ' + eligible.label; el.style.display = 'inline-block'; }
       let hint = '';
       if (next){
@@ -151,6 +166,7 @@
       const ups = rules.filter(r=>r.punches > current);
       const upcoming = ups.slice(0,3).map(r=> (r.punches-current) + '→' + r.label).join('; ');
       document.getElementById('upcoming').textContent = upcoming ? ('Next: ' + upcoming) : '';
+      if (c.last_redeem_label){ const t=c.last_redeem_at ? new Date(c.last_redeem_at).toLocaleString() : ''; document.getElementById('lastRedeem').textContent = 'Last redeemed 🎁 ' + c.last_redeem_label + (t ? (' • ' + t) : ''); }
     })();
   </script>
 </body>
