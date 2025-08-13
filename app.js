@@ -1,4 +1,33 @@
 /* Wanderlust Lash Bar v3.5.1 — resilience tweaks + full appearance */
+/* === Mobile Safari fixes (polyfills + dialog fallback) === */
+// Element.matches / closest for older Safari
+(function(){
+  if(!Element.prototype.matches){
+    Element.prototype.matches = Element.prototype.msMatchesSelector || Element.prototype.webkitMatchesSelector;
+  }
+  if(!Element.prototype.closest){
+    Element.prototype.closest = function(sel){
+      let el = this;
+      while (el && el.nodeType === 1) {
+        if (el.matches(sel)) return el;
+        el = el.parentElement || el.parentNode;
+      }
+      return null;
+    };
+  }
+})();
+
+/* Minimal <dialog> fallback for iOS that lacks showModal/close */
+function ensureDialog(dlg){
+  if(!dlg) return dlg;
+  if(typeof dlg.showModal !== 'function'){
+    dlg.showModal = function(){ this.setAttribute('open',''); };
+    dlg.close     = function(){ this.removeAttribute('open'); };
+  }
+  return dlg;
+}
+/* ======================================================== */
+
 const $ = s=>document.querySelector(s);
 const $$ = s=>Array.from(document.querySelectorAll(s));
 const storeKey='punchcard'; // stable so themes persist
