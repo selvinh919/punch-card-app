@@ -1,114 +1,144 @@
 <!doctype html>
 <html lang="en"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Wanderlust Lash Bar — Punch Card</title>
-<link rel="manifest" href="manifest.json"/><link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icons/icon-192.png"/>
 <link rel="stylesheet" href="styles.css"/>
-<script>if(navigator.standalone){document.documentElement.classList.add('standalone')}</script>
-</head><body>
+
+<!-- Emergency cache clear: open your site with ?clear=1 to wipe old SW/cache and reload fresh -->
+<script>
+(async()=>{
+  const u=new URL(location.href);
+  if(u.searchParams.get('clear')==='1'){
+    try{
+      if('serviceWorker' in navigator){
+        const regs=await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r=>r.unregister().catch(()=>{})));
+        const keys=await caches.keys();
+        await Promise.all(keys.map(k=>caches.delete(k).catch(()=>{})));
+      }
+    }catch{}
+    u.searchParams.delete('clear');       // avoid loops
+    u.searchParams.set('v', Date.now());  // bust caches/CDN
+    location.replace(u.toString());
+  }
+})();
+if(navigator.standalone){document.documentElement.classList.add('standalone')}
+</script>
+</head>
+<body>
 <header class="app-bar" id="headerBar">
   <div class="brand-wrap">
     <img src="logo-lash.svg" class="lash-logo" id="headerLogo" alt=""/>
     <h1 id="brandTitle">Wanderlust Lash Bar</h1>
   </div>
 </header>
+
 <nav class="tabs" role="tablist">
   <button class="tab active" data-tab="clients" aria-selected="true">Clients</button>
   <button class="tab" data-tab="rewards" aria-selected="false">Rewards</button>
   <button class="tab" data-tab="settings" aria-selected="false">Settings</button>
 </nav>
+
 <main>
-<section id="tab-clients" class="tab-panel active">
-  <div class="toolbar">
-    <input id="searchInput" class="search" type="search" placeholder="Search clients..."/>
-    <button id="addClientBtn" class="btn primary">+ New</button>
-  </div>
-  <div id="clientsList" class="cards"></div>
-</section>
+  <!-- Clients tab -->
+  <section id="tab-clients" class="tab-panel active">
+    <div class="toolbar">
+      <input id="searchInput" class="search" type="search" placeholder="Search clients..."/>
+      <button id="addClientBtn" class="btn primary">+ New</button>
+    </div>
+    <div id="clientsList" class="cards"></div>
+  </section>
 
-<section id="tab-rewards" class="tab-panel">
-  <div class="info"><h2>Reward Rules</h2><p>Create perks that unlock after a number of punches.</p></div>
-  <form id="rewardsForm" class="rewards-form">
-    <div class="row">
-      <label class="inline">Punches <input type="number" id="rulePunches" min="1" value="3"></label>
-      <label class="inline">Reward Label <input type="text" id="ruleLabel" placeholder="15% off"></label>
-      <button type="button" id="addRuleBtn" class="btn primary">Add Rule</button>
-    </div>
-  </form>
-  <div id="rulesList" class="rules"></div>
-</section>
+  <!-- Rewards tab -->
+  <section id="tab-rewards" class="tab-panel">
+    <div class="info"><h2>Reward Rules</h2><p>Create perks that unlock after a number of punches.</p></div>
+    <form id="rewardsForm" class="rewards-form">
+      <div class="row">
+        <label class="inline">Punches <input type="number" id="rulePunches" min="1" value="3"></label>
+        <label class="inline">Reward Label <input type="text" id="ruleLabel" placeholder="15% off"></label>
+        <button type="button" id="addRuleBtn" class="btn primary">Add Rule</button>
+      </div>
+    </form>
+    <div id="rulesList" class="rules"></div>
+  </section>
 
-<section id="tab-settings" class="tab-panel">
-  <div class="info">
-    <h2>Business</h2>
-    <div class="row">
-      <label class="inline">Business Name <input type="text" id="businessName" placeholder="Wanderlust Lash Bar"></label>
-      <label class="inline">Brand Color <input type="color" id="brandColor" value="#ff6ea6"></label>
+  <!-- Settings tab -->
+  <section id="tab-settings" class="tab-panel">
+    <div class="info">
+      <h2>Business</h2>
+      <div class="row">
+        <label class="inline">Business Name <input type="text" id="businessName" placeholder="Wanderlust Lash Bar"></label>
+        <label class="inline">Brand Color <input type="color" id="brandColor" value="#ff6ea6"></label>
+      </div>
     </div>
-  </div>
-  <div class="info" style="margin-top:12px">
-    <h2>Appearance</h2>
-    <div class="row">
-      <label class="inline">Header Text Color <input type="color" id="headerTextColor" value="#111111"></label>
-      <label class="inline">Header Background <input type="color" id="headerBgColor" value="#ffffff"></label>
+
+    <div class="info" style="margin-top:12px">
+      <h2>Appearance</h2>
+      <div class="row">
+        <label class="inline">Header Text Color <input type="color" id="headerTextColor" value="#111111"></label>
+        <label class="inline">Header Background <input type="color" id="headerBgColor" value="#ffffff"></label>
+      </div>
+      <div class="row">
+        <label>Header Logo <input type="file" id="headerLogoInput" accept="image/*"></label>
+      </div>
+      <div class="row">
+        <label>App Background Photo <input type="file" id="bgImageInput" accept="image/*"></label>
+        <button type="button" class="btn" id="removeBgBtn">Remove Background</button>
+      </div>
+      <div class="row">
+        <label class="inline">Card Style
+          <select id="cardStyle">
+            <option value="classic">Classic</option>
+            <option value="softpink">Soft Pink</option>
+            <option value="glass">Glass</option>
+            <option value="cute">Cute</option>
+          </select>
+        </label>
+        <label class="inline"><input type="checkbox" id="showBadges" checked> Show eligible badge</label>
+        <label class="inline"><input type="checkbox" id="showUpcoming" checked> Show upcoming tiers</label>
+      </div>
+      <div class="row">
+        <label class="inline">Theme
+          <select id="shareTheme">
+            <option value="classic">Classic</option>
+            <option value="girly">Girly</option>
+            <option value="minimal-blush">Minimal Blush</option>
+            <option value="candy-pop">Candy Pop</option>
+            <option value="luxe-mono">Luxe Mono</option>
+          </select>
+        </label>
+        <label class="inline">Font
+          <select id="shareFont">
+            <option value="system-ui">System (default)</option>
+            <option value="Poppins">Poppins</option>
+            <option value="Quicksand">Quicksand</option>
+            <option value="Nunito">Nunito</option>
+            <option value="Playfair Display">Playfair Display</option>
+            <option value="Pacifico">Pacifico</option>
+          </select>
+        </label>
+        <label class="inline"><input type="checkbox" id="emojiHeadings"> Cute emoji in headings 💖</label>
+      </div>
+      <div class="row">
+        <button type="button" id="forceRefreshBtn" class="btn">Force App Refresh</button>
+        <button type="button" id="copyOwnerKeyBtn" class="btn">Copy Owner Key</button>
+      </div>
     </div>
-    <div class="row">
-      <label>Header Logo <input type="file" id="headerLogoInput" accept="image/*"></label>
-    </div>
-    <div class="row">
-      <label>App Background Photo <input type="file" id="bgImageInput" accept="image/*"></label>
-      <button type="button" class="btn" id="removeBgBtn">Remove Background</button>
-    </div>
-    <div class="row">
-      <label class="inline">Card Style
-        <select id="cardStyle">
-          <option value="classic">Classic</option>
-          <option value="softpink">Soft Pink</option>
-          <option value="glass">Glass</option>
-          <option value="cute">Cute</option>
-        </select>
-      </label>
-      <label class="inline"><input type="checkbox" id="showBadges" checked> Show eligible badge</label>
-      <label class="inline"><input type="checkbox" id="showUpcoming" checked> Show upcoming tiers</label>
-    </div>
-    <div class="row">
-      <label class="inline">Theme
-        <select id="shareTheme">
-          <option value="classic">Classic</option>
-          <option value="girly">Girly</option>
-          <option value="minimal-blush">Minimal Blush</option>
-          <option value="candy-pop">Candy Pop</option>
-          <option value="luxe-mono">Luxe Mono</option>
-        </select>
-      </label>
-      <label class="inline">Font
-        <select id="shareFont">
-          <option value="system-ui">System (default)</option>
-          <option value="Poppins">Poppins</option>
-          <option value="Quicksand">Quicksand</option>
-          <option value="Nunito">Nunito</option>
-          <option value="Playfair Display">Playfair Display</option>
-          <option value="Pacifico">Pacifico</option>
-        </select>
-      </label>
-      <label class="inline"><input type="checkbox" id="emojiHeadings"> Cute emoji in headings 💖</label>
-    </div>
-    <div class="row">
-      <button type="button" id="forceRefreshBtn" class="btn">Force App Refresh</button>
-      <button type="button" id="copyOwnerKeyBtn" class="btn">Copy Owner Key</button>
-    </div>
-  </div>
-</section>
+  </section>
 </main>
 
 <button id="fabAdd" class="fab" aria-label="Add client">＋</button>
 
+<!-- Modals -->
 <dialog id="clientModal" class="modal">
   <form method="dialog" id="clientForm" class="modal-card">
     <h3 id="clientModalTitle">New Client</h3>
     <input type="hidden" id="clientId"/>
     <label>Name <input id="clientName" type="text" required placeholder="Client name"/></label>
-    <label>Phone <input id="clientPhone" type="tel" placeholder="(555) 123-4567)"/></label>
+    <label>Phone <input id="clientPhone" type="tel" placeholder="(555) 123-4567"/></label>
     <label>Reward Goal <input id="clientGoal" type="number" min="1" value="10" required/></label>
     <menu class="modal-actions">
       <button type="button" id="clientCancelBtn" class="btn">Cancel</button>
@@ -160,7 +190,9 @@
 
 <div id="toast" class="toast" aria-live="polite"></div>
 
+<!-- Scripts -->
 <script src="qrcode.min.js" defer></script>
 <script src="config.js" defer></script>
 <script src="app.js" defer></script>
 </body></html>
+
